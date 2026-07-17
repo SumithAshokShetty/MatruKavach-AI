@@ -20,3 +20,4 @@ numpy
 pymongo
 passlib[bcrypt]
 pyjwt
+langchain-groq

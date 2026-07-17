@@ -25,6 +25,9 @@ class MatruKavachOrchestrator:
                             heat_index: float = 30.0, aqi: float = 50.0, toxins: float = 2.0):
         
         from .graph import matrukavach_graph, ClinicalVitals, PlanetaryIntelligence
+        from langchain_core.messages import HumanMessage
+
+        config = {"configurable": {"thread_id": mother_id}}
 
         initial_state = {
             "mother_id": mother_id,
@@ -43,24 +46,80 @@ class MatruKavachOrchestrator:
                 heat_index=heat_index,
                 aqi=aqi,
                 toxins=toxins
-            )
+            ),
+            "messages": [
+                HumanMessage(content=f"Assess patient risk levels. Patient anonymized ID: {mother_id}")
+            ],
+            "escalation_status": "NORMAL",
+            "doctor_approval": False,
+            "doctor_override_notes": ""
         }
 
-        print(f"Executing LangGraph Background Agent for {name}...")
-        final_state = matrukavach_graph.invoke(initial_state)
+        # Clear existing state on this thread to allow clean rerun of the ReAct sequence
+        matrukavach_graph.update_state(config, {
+            "messages": [],
+            "clinical_score": 0.0,
+            "clinical_flags": [],
+            "environmental_flags": [],
+            "final_risk_score": 0.0,
+            "risk_level": "LOW",
+            "escalation_status": "NORMAL",
+            "doctor_approval": False,
+            "doctor_override_notes": ""
+        })
+
+        print(f"Executing autonomous ReAct loop for {name} with thread_id: {mother_id}...")
+        matrukavach_graph.invoke(initial_state, config)
         
+        # At this point, the LangGraph flow is paused right before generating guidance
+        state_info = matrukavach_graph.get_state(config)
+        current_values = state_info.values
+
         return RiskAssessment(
             mother_id=mother_id,
-            overall_risk_score=round(final_state.get("final_risk_score", 1.0), 1),
-            risk_level=final_state.get("risk_level", "LOW"),
-            clinical_flags=final_state.get("clinical_flags", []),
-            environmental_flags=final_state.get("environmental_flags", []),
-            nutrition_advice=final_state.get("nutrition_advice", {}),
+            overall_risk_score=round(current_values.get("final_risk_score", 1.0), 1),
+            risk_level=current_values.get("risk_level", "LOW"),
+            clinical_flags=current_values.get("clinical_flags", []),
+            environmental_flags=current_values.get("environmental_flags", []),
+            nutrition_advice={},  # Left empty until doctor reviews and confirms guidance
             medication_reminders=[], 
-            environmental_impact=final_state.get("environmental_impact", ""),
-            clinical_justification=final_state.get("clinical_justification", ""),
+            environmental_impact=current_values.get("environmental_impact", ""),
+            clinical_justification="AWAITING_APPROVAL: Graph execution paused. Awaiting medical practitioner confirmation.",
             timestamp=datetime.now()
         )
+
+    async def handle_doctor_action(self, mother_id: str, approved: bool, override_notes: str = ""):
+        """
+        Injects the doctor's override notes/decisions and resumes the LangGraph execution.
+        """
+        from .graph import matrukavach_graph
+        config = {"configurable": {"thread_id": mother_id}}
+
+        state_info = matrukavach_graph.get_state(config)
+        if not state_info.next:
+            # Process is already completed, read current state values
+            current_values = state_info.values
+        else:
+            # Update state with clinician review details
+            matrukavach_graph.update_state(config, {
+                "doctor_approval": approved,
+                "doctor_override_notes": override_notes
+            }, as_node="generate_guidance")
+
+            # Resume thread execution
+            resumed_state = matrukavach_graph.invoke(None, config)
+            current_values = resumed_state
+
+        return {
+            "overall_risk_score": round(current_values.get("final_risk_score", 1.0), 1),
+            "risk_level": current_values.get("risk_level", "LOW"),
+            "clinical_flags": current_values.get("clinical_flags", []),
+            "environmental_flags": current_values.get("environmental_flags", []),
+            "nutrition_advice": current_values.get("nutrition_advice", {}),
+            "environmental_impact": current_values.get("environmental_impact", ""),
+            "clinical_justification": current_values.get("clinical_justification", ""),
+            "escalation_status": current_values.get("escalation_status", "NORMAL")
+        }
 
     async def generate_chat_summary(self, mother_id: str, messages: list):
         if not messages:
@@ -76,8 +135,8 @@ class MatruKavachOrchestrator:
         chat_log = "\n".join(formatted_messages)
         
         prompt = f"""
-        You are an AI assisting a doctor. Please provide a brief, clinical summary of the following chat history from the past two weeks between a pregnant mother and an ASHA worker/bot.
-        Focus on symptoms reported, emergencies, overall tone, and any concerns raised. Keep the summary concise (1-2 paragraphs). Let it be direct.
+        You are an AI assisting a doctor. Please provide a brief, clinical summary of the chat history from the past two weeks between a pregnant mother and an ASHA worker/bot.
+        Focus on symptoms reported, emergencies, overall tone, and concerns raised. Keep it to 1-2 paragraphs. Do not leak names or PII.
         
         Chat History:
         {chat_log}
@@ -96,7 +155,7 @@ class MatruKavachOrchestrator:
                 response = current_model.generate_content(prompt)
                 return response.text.strip()
             except Exception as e:
-                print(f"Summary generation failed for key starting with '{api_key[:8]}': {e}")
+                print(f"Summary generation failed: {e}")
                 last_error = e
                 
-        return f"Failed to generate summary due to an AI error: {last_error}"
+        return f"Failed to generate summary: {last_error}"

@@ -21,7 +21,7 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col relative overflow-hidden z-10 px-4 pb-32">
 
-        <section className="container mx-auto flex flex-col items-center justify-start text-center space-y-10 max-w-5xl min-h-[calc(100vh-80px)] pb-10 pt-32 md:pt-40">
+        <section className="container mx-auto flex flex-col items-center justify-start text-center space-y-8 max-w-5xl pb-10 pt-16 md:pt-24">
 
           <motion.h1
             initial="hidden" animate="visible" variants={fadeUp} transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
@@ -40,10 +40,10 @@ export default function Home() {
 
           <motion.div
             initial="hidden" animate="visible" variants={fadeUp} transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            className="pt-8"
+            className="pt-6"
           >
             <Link href="/asha">
-              <button className="bg-black/90 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full text-lg font-medium shadow-[0_0_40px_rgba(0,0,0,0.15)] hover:shadow-[0_0_60px_rgba(0,0,0,0.25)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 w-full sm:w-auto">
+              <button className="bg-black text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-gray-900 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
                 {t("home.launchAsha")} <ArrowRight className="w-5 h-5" />
               </button>
             </Link>
