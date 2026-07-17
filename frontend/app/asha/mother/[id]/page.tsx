@@ -70,16 +70,12 @@ export default function MotherDetailPage() {
     };
 
     const handleDeleteAssessment = async (assessmentDataId: number) => {
-        if (!confirm("Are you sure you want to delete this assessment?")) return;
-
         try {
             const res = await fetch(`${API_BASE_URL}/assessment/${assessmentDataId}`, {
                 method: "DELETE"
             });
             if (res.ok) {
                 setHistory(prev => prev.filter(record => record.vitals.id !== assessmentDataId));
-            } else {
-                alert("Failed to delete assessment");
             }
         } catch (e) {
             console.error("Error deleting assessment:", e);

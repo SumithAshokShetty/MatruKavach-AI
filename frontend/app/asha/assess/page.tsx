@@ -4,12 +4,13 @@ import React, { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { MapPin, ThermometerSun, Activity, HeartPulse, CheckCircle, Droplets, Wind, AlertCircle } from "lucide-react";
+import { MapPin, ThermometerSun, Activity, HeartPulse, CheckCircle, Droplets, Wind, AlertCircle, Mic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/LanguageContext";
 import { translateDynamic } from "@/lib/translations";
 import { API_BASE_URL } from "@/lib/api";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 function AssessmentContent() {
     const searchParams = useSearchParams();
@@ -23,6 +24,20 @@ function AssessmentContent() {
     const [consultationNote, setConsultationNote] = useState("");
     const [noteSaving, setNoteSaving] = useState(false);
     const [noteSaved, setNoteSaved] = useState(false);
+    const [isVoiceMode, setIsVoiceMode] = useState(false);
+
+    const handleVoiceComplete = (data: any) => {
+        setFormData(prev => ({
+            ...prev,
+            systolic: data.sys_bp !== undefined && data.sys_bp !== null ? String(data.sys_bp) : prev.systolic,
+            diastolic: data.dia_bp !== undefined && data.dia_bp !== null ? String(data.dia_bp) : prev.diastolic,
+            weight: data.weight_kg !== undefined && data.weight_kg !== null ? String(data.weight_kg) : prev.weight,
+            hemoglobin: data.hemoglobin_gdl !== undefined && data.hemoglobin_gdl !== null ? String(data.hemoglobin_gdl) : prev.hemoglobin,
+            glucose: data.random_glucose_mgdl !== undefined && data.random_glucose_mgdl !== null ? String(data.random_glucose_mgdl) : prev.glucose,
+            otherSymptoms: data.other_symptoms !== undefined && data.other_symptoms !== null ? String(data.other_symptoms) : prev.otherSymptoms,
+        }));
+        setIsVoiceMode(false);
+    };
 
     const [formData, setFormData] = useState({
         motherId: searchParams.get("motherId") || "MK-2024-001",
@@ -181,104 +196,149 @@ function AssessmentContent() {
                 </div>
             )}
 
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto">
                 <Card variant="solid" className="p-8 h-fit shadow-lg shadow-primary/5 rounded-2xl bg-white border border-gray-100">
-                    <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
-                        <div className="p-2 bg-accent/10 rounded-lg">
-                            <Activity className="w-6 h-6 text-accent" />
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-accent/10 rounded-lg">
+                                <Activity className="w-6 h-6 text-accent" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-primary">{t("assess.clinicalForm")}</h2>
                         </div>
-                        <h2 className="text-2xl font-bold text-primary">{t("assess.clinicalForm")}</h2>
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                type="button"
+                                onClick={() => setIsVoiceMode(false)}
+                                className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${!isVoiceMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                            >
+                                Manual Fill
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsVoiceMode(true)}
+                                className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all flex items-center gap-1.5 ${isVoiceMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                            >
+                                <Mic className="w-4 h-4 text-[#C5A880]" /> Voice Fill
+                            </button>
+                        </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                <Activity className="w-4 h-4 text-red-500" /> {t("assess.bp")}
-                            </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Input
-                                    placeholder={t("assess.systolic")}
-                                    type="number"
-                                    value={formData.systolic}
-                                    onChange={(e) => setFormData({ ...formData, systolic: e.target.value })}
-                                    className="bg-gray-50/50 w-full"
-                                    required
-                                />
-                                <Input
-                                    placeholder={t("assess.diastolic")}
-                                    type="number"
-                                    value={formData.diastolic}
-                                    onChange={(e) => setFormData({ ...formData, diastolic: e.target.value })}
-                                    className="bg-gray-50/50 w-full"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                                <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-blue-500" /> {t("assess.weight")}
-                                </label>
-                                <Input
-                                    placeholder="e.g. 65"
-                                    type="number"
-                                    value={formData.weight}
-                                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                                    className="bg-gray-50/50 w-full"
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                    <Droplets className="w-4 h-4 text-red-600" /> {t("assess.hemoglobin")}
-                                </label>
-                                <Input
-                                    placeholder="e.g. 11.5"
-                                    type="number"
-                                    step="0.1"
-                                    value={formData.hemoglobin}
-                                    onChange={(e) => setFormData({ ...formData, hemoglobin: e.target.value })}
-                                    className="bg-gray-50/50 w-full"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                <ThermometerSun className="w-4 h-4 text-orange-500" /> {t("assess.glucose")}
-                            </label>
-                            <Input
-                                placeholder="e.g. 100"
-                                type="number"
-                                value={formData.glucose}
-                                onChange={(e) => setFormData({ ...formData, glucose: e.target.value })}
-                                className="bg-gray-50/50"
-                                required
+                    {isVoiceMode ? (
+                        <div className="mb-6">
+                            <VoiceAssistant
+                                portalType="asha"
+                                onComplete={(data) => {
+                                    handleVoiceComplete(data);
+                                    // Submit automatically when completed
+                                    setTimeout(() => {
+                                        const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+                                        handleSubmit(syntheticEvent);
+                                    }, 100);
+                                }}
+                                onCancel={() => setIsVoiceMode(false)}
+                                onChange={(key, val) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        systolic: key === "sys_bp" ? String(val) : prev.systolic,
+                                        diastolic: key === "dia_bp" ? String(val) : prev.diastolic,
+                                        weight: key === "weight_kg" ? String(val) : prev.weight,
+                                        hemoglobin: key === "hemoglobin_gdl" ? String(val) : prev.hemoglobin,
+                                        glucose: key === "random_glucose_mgdl" ? String(val) : prev.glucose,
+                                        otherSymptoms: key === "other_symptoms" ? String(val) : prev.otherSymptoms,
+                                    }));
+                                }}
                             />
                         </div>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-red-500" /> {t("assess.bp")}
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Input
+                                        placeholder={t("assess.systolic")}
+                                        type="number"
+                                        value={formData.systolic}
+                                        onChange={(e) => setFormData({ ...formData, systolic: e.target.value })}
+                                        className="bg-gray-50/50 w-full"
+                                        required
+                                    />
+                                    <Input
+                                        placeholder={t("assess.diastolic")}
+                                        type="number"
+                                        value={formData.diastolic}
+                                        onChange={(e) => setFormData({ ...formData, diastolic: e.target.value })}
+                                        className="bg-gray-50/50 w-full"
+                                        required
+                                    />
+                                </div>
+                            </div>
 
-                        <div className="pt-4 border-t border-gray-100">
-                            <label className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
-                                <AlertCircle className="w-4 h-4 text-purple-500" /> {t("assess.symptoms")}
-                            </label>
-                            <textarea
-                                className="w-full h-24 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all shadow-inner resize-none placeholder:text-gray-400"
-                                placeholder={t("assess.symptomsPlaceholder")}
-                                value={formData.otherSymptoms}
-                                onChange={(e) => setFormData({ ...formData, otherSymptoms: e.target.value })}
-                            />
-                        </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-blue-500" /> {t("assess.weight")}
+                                    </label>
+                                    <Input
+                                        placeholder="e.g. 65"
+                                        type="number"
+                                        value={formData.weight}
+                                        onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                                        className="bg-gray-50/50 w-full"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                        <Droplets className="w-4 h-4 text-red-600" /> {t("assess.hemoglobin")}
+                                    </label>
+                                    <Input
+                                        placeholder="e.g. 11.5"
+                                        type="number"
+                                        step="0.1"
+                                        value={formData.hemoglobin}
+                                        onChange={(e) => setFormData({ ...formData, hemoglobin: e.target.value })}
+                                        className="bg-gray-50/50 w-full"
+                                        required
+                                    />
+                                </div>
+                            </div>
 
-                        <Button type="submit" className="w-full py-6 text-lg rounded-xl mt-4 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all font-bold" isLoading={loading}>
-                            {loading ? t("assess.analyzing") : t("assess.runAssessment")}
-                        </Button>
-                        {error && <p className="text-alert text-sm text-center mt-3 font-medium bg-red-50 p-2 rounded-lg">{error}</p>}
-                    </form>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                    <ThermometerSun className="w-4 h-4 text-orange-500" /> {t("assess.glucose")}
+                                </label>
+                                <Input
+                                    placeholder="e.g. 100"
+                                    type="number"
+                                    value={formData.glucose}
+                                    onChange={(e) => setFormData({ ...formData, glucose: e.target.value })}
+                                    className="bg-gray-50/50"
+                                    required
+                                />
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100">
+                                <label className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
+                                    <AlertCircle className="w-4 h-4 text-purple-500" /> {t("assess.symptoms")}
+                                </label>
+                                <textarea
+                                    className="w-full h-24 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all shadow-inner resize-none placeholder:text-gray-400"
+                                    placeholder={t("assess.symptomsPlaceholder")}
+                                    value={formData.otherSymptoms}
+                                    onChange={(e) => setFormData({ ...formData, otherSymptoms: e.target.value })}
+                                />
+                            </div>
+
+                            <Button type="submit" className="w-full py-6 text-lg rounded-xl mt-4 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all font-bold" isLoading={loading}>
+                                {loading ? t("assess.analyzing") : t("assess.runAssessment")}
+                            </Button>
+                            {error && <p className="text-alert text-sm text-center mt-3 font-medium bg-red-50 p-2 rounded-lg">{error}</p>}
+                        </form>
+                    )}
                 </Card>
-
                 <AnimatePresence mode="wait">
                     {result && (
                         <motion.div
@@ -391,7 +451,7 @@ function AssessmentContent() {
                                     <h2 className="text-xl font-bold text-gray-800">{t("assess.consultNote")}</h2>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-4">
-                                    Record your direct observations and advice given to the mother based on the AI Risk Analysis.
+                                    {t("assess.consultationHelper")}
                                 </p>
                                 <textarea
                                     className="w-full h-32 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm resize-none placeholder:text-gray-400"

@@ -107,6 +107,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.nutAdvice": "Nutrition & Care Plan",
         "assess.medAdvice": "Medications & Reminders",
         "assess.consultNote": "Frontline Consultation Notes",
+        "assess.consultationHelper": "Record your direct observations and advice given to the mother based on the AI Risk Analysis.",
         "assess.consultPlaceholder": "Write messages to send to the doctor or observations...",
         "assess.saveNote": "Save Consultation Note",
         "assess.noteSaved": "Note saved and synced with Doctor portal!",
@@ -267,6 +268,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.nutAdvice": "पोषण और देखभाल योजना",
         "assess.medAdvice": "दवाएं और अनुस्मारक",
         "assess.consultNote": "परामर्श टिप्पणी",
+        "assess.consultationHelper": "एआई जोखिम विश्लेषण के आधार पर मां को दिए गए अपने प्रत्यक्ष अवलोकन और सलाह को दर्ज करें।",
         "assess.consultPlaceholder": "डॉक्टर को भेजने के लिए संदेश या अवलोकन लिखें...",
         "assess.saveNote": "परामर्श टिप्पणी सहेजें",
         "assess.noteSaved": "टिप्पणी सहेज ली गई है और डॉक्टर पोर्टल पर उपलब्ध है!",
@@ -427,6 +429,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.nutAdvice": "पोषण आणि काळजी योजना",
         "assess.medAdvice": "औषधे आणि स्मरणपत्रे",
         "assess.consultNote": "परामर्श नोंद",
+        "assess.consultationHelper": "एआय जोखीम विश्लेषणावर आधारित मातेला दिलेली थेट निरीक्षणे आणि सल्ला नोंदवा.",
         "assess.consultPlaceholder": "डॉक्टरांना पाठवण्यासाठी संदेश किंवा निरीक्षणे लिहा...",
         "assess.saveNote": "परामर्श नोंद जतन करा",
         "assess.noteSaved": "नोंद जतन केली आहे आणि डॉक्टर पोर्टलवर उपलब्ध आहे!",
@@ -587,6 +590,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.nutAdvice": "ಪೌಷ್ಟಿಕಾಂಶ ಮತ್ತು ಆರೈಕೆ ಯೋಜನೆ",
         "assess.medAdvice": "ಔಷಧಿಗಳು आणि ಜ್ಞಾಪನೆಗಳು",
         "assess.consultNote": "ಸಮಾಲೋಚನೆ ಟಿಪ್ಪಣಿ",
+        "assess.consultationHelper": "ಎಐ ಅಪಾಯದ ವಿಶ್ಲೇಷಣೆಯ ಆಧಾರದ ಮೇಲೆ ತಾಯಿಗೆ ನೀಡಿದ ನೇರ ಅವলোகನಗಳು ಮತ್ತು ಸಲಹೆಗಳನ್ನು ದಾಖಲಿಸಿ.",
         "assess.consultPlaceholder": "ವೈದ್ಯರಿಗೆ ಕಳುಹಿಸಲು ಸಂದೇಶಗಳು ಅಥವಾ ವೀಕ್ಷಣೆಗಳನ್ನು ಬರೆಯಿರಿ...",
         "assess.saveNote": "ಟಿಪ್ಪಣಿ ಉಳಿಸಿ",
         "assess.noteSaved": "ಟಿಪ್ಪಣಿಯನ್ನು ಉಳಿಸಲಾಗಿದೆ ಮತ್ತು ವೈದ್ಯರ ಪೋರ್ಟಲ್‌ನಲ್ಲಿ ಲಭ್ಯವಿದೆ!",
@@ -746,7 +750,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.noFlags": "ఎటువంటి తీవ్రమైన అపాయాలు గుర్తించబడలేదు.",
         "assess.nutAdvice": "పోషకాహార మరియు సంరక్షణ ప్రణాళిక",
         "assess.medAdvice": "మందులు మరియు రిమైండర్లు",
-        "assess.consultNote": "സമാലോചന ഗమనిక",
+        "assess.consultNote": "సమాలోచన గమనిక",
+        "assess.consultationHelper": "AI రిస్క్ విశ్లేషణ ఆధారంగా తల్లికి ఇచ్చిన ప్రత్యక్ష పరిశీలనలు మరియు సలహాలను రికార్డ్ చేయండి.",
         "assess.consultPlaceholder": "వైద్యునికి పంపడానికి సందేశాలు లేదా పరిశీలనలు రాయండి...",
         "assess.saveNote": "సమాలోచన నోట్ భద్రపరచు",
         "assess.noteSaved": "నోట్ భద్రపరచబడింది మరియు వైద్యుల పోర్టల్‌లో అందుబాటులో ఉంది!",
@@ -907,6 +912,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.nutAdvice": "ஊட்டச்சத்து மற்றும் பராமரிப்பு திட்டம்",
         "assess.medAdvice": "மருந்துகள் மற்றும் நினைவூட்டல்கள்",
         "assess.consultNote": "ஆலோசனைக் குறிப்பு",
+        "assess.consultationHelper": "AI இடர் பகுப்பாய்வின் அடிப்படையில் தாய்க்கு வழங்கப்பட்ட நேரடி அவதானிப்புகள் மற்றும் ஆலோசனைகளைப் பதிவு செய்யவும்.",
         "assess.consultPlaceholder": "மருத்துவருக்கு அனுப்ப வேண்டிய செய்திகள் அல்லது அவதானிப்புகளை எழுதுங்கள்...",
         "assess.saveNote": "ஆலோசனைக் குறிப்பைச் சேமி",
         "assess.noteSaved": "குறிப்பு சேமிக்கப்பட்டு மருத்துவர் போர்ட்டலுடன் இணைக்கப்பட்டுள்ளது!",
@@ -1067,6 +1073,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "assess.nutAdvice": "পুষ্টি ও যত্ন পরিকল্পনা",
         "assess.medAdvice": "ওষুধ এবং অনুস্মারক",
         "assess.consultNote": "পরামর্শ মন্তব্য",
+        "assess.consultationHelper": "AI ঝুঁকি বিশ্লেষণের উপর ভিত্তি করে মাকে দেওয়া আপনার প্রত্যক্ষ পর্যবেক্ষণ এবং পরামর্শ রেকর্ড করুন।",
         "assess.consultPlaceholder": "ডাক্তারকে পাঠানোর জন্য বার্তা বা পর্যবেক্ষণ লিখুন...",
         "assess.saveNote": "পরামর্শ মন্তব্য সংরক্ষণ করুন",
         "assess.noteSaved": "মন্তব্যটি সংরক্ষিত হয়েছে এবং ডাক্তার পোর্টালে উপলব্ধ করা হয়েছে!",
@@ -1307,6 +1314,114 @@ export function translateDynamic(text: string, lang: Language): string {
             bn: "আয়রন সাপ্লিমেন্ট"
         }
     };
+
+    if (cleanText.startsWith("Reported Symptoms:")) {
+        const symptomsPart = cleanText.replace("Reported Symptoms:", "").trim();
+        const prefixMap: Record<Language, string> = {
+            en: "Reported Symptoms",
+            hi: "रिपोर्ट किए गए लक्षण",
+            mr: "नोंदवलेली लक्षणे",
+            kn: "ವರದಿಯಾದ ಲಕ್ಷಣಗಳು",
+            te: "నివేదించబడిన లక్షణాలు",
+            ta: "அறிவிக்கப்பட்ட அறிகுறிகள்",
+            bn: "প্রতিবেদিত লক্ষণগুলি"
+        };
+        const prefix = prefixMap[lang] || "Reported Symptoms";
+        
+        const symptomMappings: Record<string, Partial<Record<Language, string>>> = {
+            "Headaches": {
+                hi: "सिरदर्द",
+                mr: "डोकेदुखी",
+                kn: "ತಲೆನೋವು",
+                te: "తలనొప్పి",
+                ta: "தலைவலி",
+                bn: "মাথাব্যথা"
+            },
+            "Headache": {
+                hi: "सिरदर्द",
+                mr: "डोकेदुखी",
+                kn: "ತಲೆನೋವು",
+                te: "తలనొప్పి",
+                ta: "தலைவலி",
+                bn: "মাথাব্যথা"
+            },
+            "Swelling": {
+                hi: "सूजन",
+                mr: "सूज",
+                kn: "ಊತ",
+                te: "వాపు",
+                ta: "வீக்கம்",
+                bn: "ফোলা"
+            },
+            "Vision issues": {
+                hi: "धुंधला दिखना या दृष्टि समस्याएं",
+                mr: "दृष्टी समस्या",
+                kn: "ದೃಷ್ಟಿ ತೊಂದರೆಗಳು",
+                te: "దృష్టి సమస్యలు",
+                ta: "பார்வை பிரச்சினைகள்",
+                bn: "দৃষ্টিশক্তির সমস্যা"
+            }
+        };
+        
+        const translatedSymptom = symptomMappings[symptomsPart]?.[lang] || symptomsPart;
+        return `${prefix}: ${translatedSymptom}`;
+    }
+
+    const clinicalFlagsMappings: Record<string, Partial<Record<Language, string>>> = {
+        "Hypertension Level 1": {
+            hi: "उच्च रक्तचाप स्तर 1",
+            mr: "उच्च रक्तदाब पातळी १",
+            kn: "ರಕ್ತದೊತ್ತಡ ಮಟ್ಟ 1",
+            te: "అధిక రక్తపోటు స్థాయి 1",
+            ta: "உயர் இரத்த அழுத்தம் நிலை 1",
+            bn: "উচ্চ রক্তচাপ স্তর ১"
+        },
+        "Severe Hypertension (Preeclampsia Risk)": {
+            hi: "गंभीर उच्च रक्तचाप (प्रीइमप्लेम्पसिया जोखिम)",
+            mr: "गंभीर उच्च रक्तदाब (प्रीइक्लेम्पसिया जोखीम)",
+            kn: "ತೀವ್ರ ರಕ್ತದೊತ್ತಡ (ಪ್ರಿಕ್ಲಾಂಪ್ಸಿಯಾ ಅಪಾಯ)",
+            te: "తీవ్రమైన అధిక రక్తపోటు (ప్రీఎక్లాంప్సియా ముప్పు)",
+            ta: "கடுமையான உயர் இரத்த அழுத்தம் (ப்ரீக்ளாம்ப்ஸியா ஆபத்து)",
+            bn: "গুরুতর উচ্চ রক্তচাপ (প্রি-এক্লাম্পসিয়া ঝুঁকি)"
+        },
+        "Anemia Detected": {
+            hi: "एनीमिया (खून की कमी) पाई गई",
+            mr: "ॲनिमिया आढळला (रक्ताची कमतरता)",
+            kn: "ರಕ್ತಹೀನತೆ ಪತ್ತೆಯಾಗಿದೆ",
+            te: "రक्तహీనత గుర్తించబడింది",
+            ta: "இரத்த சோகை கண்டறியப்பட்டது",
+            bn: "রক্তাল্পতা সনাক্ত করা হয়েছে"
+        },
+        "Severe Anemia": {
+            hi: "गंभीर एनीमिया (अत्यधिक खून की कमी)",
+            mr: "गंभीर ॲनिमिया",
+            kn: "ತೀವ್ರ ರಕ್ತಹೀನತೆ",
+            te: "తీవ్రమైన రక్తహీనత",
+            ta: "கடுமையான இரத்த சோகை",
+            bn: "গুরুতর রক্তাল্পতা"
+        },
+        "Elevated Blood Glucose": {
+            hi: "रक्त में ग्लूकोज का स्तर बढ़ा हुआ",
+            mr: "रक्तातील ग्लुकोजची पातळी वाढली",
+            kn: "ರಕ್ತದಲ್ಲಿನ ಗ್ಲೂಕೋಸ್ ಹೆಚ್ಚಾಗಿದೆ",
+            te: "రक्तంలో గ్లూకోజ్ పెరిగింది",
+            ta: "அதிகரித்த இரத்த குளுக்கோஸ்",
+            bn: "রক্তে গ্লুকোজের মাত্রা বৃদ্ধি"
+        },
+        "Possible Gestational Diabetes": {
+            hi: "गर्भावधि मधुमेह (डायबिटीज) की संभावना",
+            mr: "गर्भधारणेदरम्यानचा मधुमेह शक्यता",
+            kn: "ಗರ್ಭಾವಸ್ಥೆಯ ಮಧುಮೇಹದ ಸಾಧ್ಯತೆ",
+            te: "గర్భధారణ మధుమేహం వచ్చే అవకాశం",
+            ta: "கர்ப்பகால நீরিழிவு நோய் சாத்தியம்",
+            bn: "গর্ভকালীন ডায়াবেটিসের সম্ভাবনা"
+        }
+    };
+
+    const targetClinicalMap = clinicalFlagsMappings[cleanText];
+    if (targetClinicalMap && targetClinicalMap[lang]) {
+        return targetClinicalMap[lang];
+    }
 
     const targetMap = mappings[cleanText];
     if (targetMap && targetMap[lang]) {

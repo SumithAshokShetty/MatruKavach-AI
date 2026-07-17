@@ -3,16 +3,7 @@ from .geospatial import get_environmental_data, Coordinates
 from .clinical import assess_clinical_risk, ClinicalVitals
 from .nutrition import generate_nutrition_advice
 from models import RiskAssessment
-import google.generativeai as genai
 import os
-
-GEMINI_API_KEY_STR = os.environ.get("GOOGLE_API_KEY", "")
-api_keys = [k.strip() for k in GEMINI_API_KEY_STR.split(",") if k.strip()]
-if api_keys:
-    genai.configure(api_key=api_keys[0])
-    model = genai.GenerativeModel('gemini-2.5-flash')
-else:
-    model = None
 
 class MatruKavachOrchestrator:
     def __init__(self):
@@ -54,6 +45,14 @@ class MatruKavachOrchestrator:
             "doctor_approval": False,
             "doctor_override_notes": ""
         }
+
+        # Clear existing checkpointer checkpoints on this thread to force a fresh START run
+        from .graph import memory_checkpointer
+        try:
+            if hasattr(memory_checkpointer, "storage") and mother_id in memory_checkpointer.storage:
+                del memory_checkpointer.storage[mother_id]
+        except Exception as e:
+            print(f"Error resetting checkpointer: {e}")
 
         # Clear existing state on this thread to allow clean rerun of the ReAct sequence
         matrukavach_graph.update_state(config, {
@@ -142,20 +141,14 @@ class MatruKavachOrchestrator:
         {chat_log}
         """
         
-        api_key_str = os.environ.get("GOOGLE_API_KEY", "")
-        api_keys = [k.strip() for k in api_key_str.split(",") if k.strip()]
-        if not api_keys:
-            return "AI model not configured for summary generation (no keys found)."
+        try:
+            from .graph import get_llm_model
+            from langchain_core.messages import HumanMessage
             
-        last_error = None
-        for api_key in api_keys:
-            try:
-                genai.configure(api_key=api_key)
-                current_model = genai.GenerativeModel('gemini-2.5-flash')
-                response = current_model.generate_content(prompt)
-                return response.text.strip()
-            except Exception as e:
-                print(f"Summary generation failed: {e}")
-                last_error = e
-                
-        return f"Failed to generate summary: {last_error}"
+            # Fetch primary model or fallbacks (Groq -> Google)
+            llm = get_llm_model(structured=False)
+            response = llm.invoke([HumanMessage(content=prompt)])
+            return response.content.strip()
+        except Exception as e:
+            print(f"Chat summary generation LLM failed: {e}. Using local summary fallback.")
+            return "Vitals logs active. Environmental parameters compiled. Direct consultation recommended."

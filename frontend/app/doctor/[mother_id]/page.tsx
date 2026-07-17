@@ -5,10 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { MapPin, Calendar, Clock, Activity, FileText, Pill, FileUp, Apple, ClipboardList, CheckCircle2, MessageSquare, AlertCircle, RefreshCw } from "lucide-react";
+import { MapPin, Calendar, Clock, Activity, FileText, Pill, FileUp, Apple, ClipboardList, CheckCircle2, MessageSquare, AlertCircle, RefreshCw, Mic } from "lucide-react";
 import { ChatWindow } from "@/components/ChatWindow";
 import { API_BASE_URL } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageContext";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 export default function DoctorPatientDetail() {
     const params = useParams();
@@ -27,11 +28,35 @@ export default function DoctorPatientDetail() {
     const [generatingSummary, setGeneratingSummary] = useState(false);
 
     const [isConsulting, setIsConsulting] = useState(false);
+    const [isVoiceMode, setIsVoiceMode] = useState(false);
     const [consultForm, setConsultForm] = useState({
         systolic_bp: "", diastolic_bp: "", weight_kg: "", heart_rate: "",
         health_status: "Stable", observations: "", nutrition_plan: "", medication_plan: "",
         next_consultation_date: ""
     });
+
+    const handleVoiceComplete = (data: any) => {
+        setConsultForm(prev => {
+            let statusVal = prev.health_status;
+            if (data.status === "Stable") statusVal = "Stable";
+            else if (data.status === "Critical") statusVal = "Critical Admission Required";
+            else if (data.status === "Requires Attention") statusVal = "Monitor Closely";
+
+            return {
+                ...prev,
+                systolic_bp: data.sys_bp !== undefined && data.sys_bp !== null ? String(data.sys_bp) : prev.systolic_bp,
+                diastolic_bp: data.dia_bp !== undefined && data.dia_bp !== null ? String(data.dia_bp) : prev.diastolic_bp,
+                weight_kg: data.weight_kg !== undefined && data.weight_kg !== null ? String(data.weight_kg) : prev.weight_kg,
+                heart_rate: data.heart_rate !== undefined && data.heart_rate !== null ? String(data.heart_rate) : prev.heart_rate,
+                health_status: statusVal,
+                next_consultation_date: data.next_consultation_date !== undefined && data.next_consultation_date !== null ? String(data.next_consultation_date) : prev.next_consultation_date,
+                observations: data.doctor_observations !== undefined && data.doctor_observations !== null ? String(data.doctor_observations) : prev.observations,
+                medication_plan: data.medication_advice !== undefined && data.medication_advice !== null ? String(data.medication_advice) : prev.medication_plan,
+                nutrition_plan: data.nutritional_advice !== undefined && data.nutritional_advice !== null ? String(data.nutritional_advice) : prev.nutrition_plan,
+            };
+        });
+        setIsVoiceMode(false);
+    };
 
     useEffect(() => {
         Promise.all([
@@ -118,11 +143,9 @@ export default function DoctorPatientDetail() {
                     health_status: "Stable", observations: "", nutrition_plan: "", medication_plan: "",
                     next_consultation_date: ""
                 });
-                alert("Consultation saved and prescription sent to patient via Telegram!");
             }
         } catch (err) {
             console.error(err);
-            alert("Failed to submit consultation");
         }
     };
 
@@ -185,57 +208,113 @@ export default function DoctorPatientDetail() {
                         <div>
                             {isConsulting && (
                                 <Card variant="glass" className="p-8 mb-8 border-t-4 border-t-gray-900 shadow-md bg-white">
-                                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                        <ClipboardList className="w-5 h-5" /> Start Clinical Consultation
-                                    </h3>
-                                    <form onSubmit={submitConsultation} className="space-y-6">
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div><label className="text-xs font-bold text-gray-500 uppercase">Sys BP</label><input type="number" required value={consultForm.systolic_bp} onChange={e => setConsultForm({ ...consultForm, systolic_bp: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="120" /></div>
-                                            <div><label className="text-xs font-bold text-gray-500 uppercase">Dia BP</label><input type="number" required value={consultForm.diastolic_bp} onChange={e => setConsultForm({ ...consultForm, diastolic_bp: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="80" /></div>
-                                            <div><label className="text-xs font-bold text-gray-500 uppercase">{t("assess.weight")}</label><input type="number" step="0.1" value={consultForm.weight_kg} onChange={e => setConsultForm({ ...consultForm, weight_kg: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="65" /></div>
-                                            <div><label className="text-xs font-bold text-gray-500 uppercase">Heart Rate</label><input type="number" value={consultForm.heart_rate} onChange={e => setConsultForm({ ...consultForm, heart_rate: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="80" /></div>
+                                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <ClipboardList className="w-5 h-5" /> Start Clinical Consultation
+                                        </h3>
+                                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsVoiceMode(false)}
+                                                className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${!isVoiceMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                            >
+                                                Manual Fill
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsVoiceMode(true)}
+                                                className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all flex items-center gap-1.5 ${isVoiceMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                            >
+                                                <Mic className="w-4 h-4 text-[#C5A880]" /> Voice Fill
+                                            </button>
                                         </div>
+                                    </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase">{t("common.status")}</label>
-                                                <select value={consultForm.health_status} onChange={e => setConsultForm({ ...consultForm, health_status: e.target.value })} className="w-full mt-1 p-2 border rounded-md">
-                                                    <option>Stable</option>
-                                                    <option>Monitor Closely</option>
-                                                    <option>High Risk</option>
-                                                    <option>Critical Admission Required</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Next Consultation Date</label>
-                                                <input type="date" value={consultForm.next_consultation_date} onChange={e => setConsultForm({ ...consultForm, next_consultation_date: e.target.value })} className="w-full mt-1 p-2 border rounded-md" />
-                                            </div>
+                                    {isVoiceMode ? (
+                                        <div className="mb-6">
+                                            <VoiceAssistant
+                                                portalType="doctor"
+                                                onComplete={(data) => {
+                                                    handleVoiceComplete(data);
+                                                    setTimeout(() => {
+                                                        const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+                                                        submitConsultation(syntheticEvent);
+                                                    }, 100);
+                                                }}
+                                                onCancel={() => setIsVoiceMode(false)}
+                                                onChange={(key, val) => {
+                                                    setConsultForm(prev => {
+                                                        let statusVal = prev.health_status;
+                                                        if (key === "status") {
+                                                            if (val === "Stable") statusVal = "Stable";
+                                                            else if (val === "Critical") statusVal = "Critical Admission Required";
+                                                            else if (val === "Requires Attention") statusVal = "Monitor Closely";
+                                                        }
+                                                        return {
+                                                            ...prev,
+                                                            systolic_bp: key === "sys_bp" ? String(val) : prev.systolic_bp,
+                                                            diastolic_bp: key === "dia_bp" ? String(val) : prev.diastolic_bp,
+                                                            weight_kg: key === "weight_kg" ? String(val) : prev.weight_kg,
+                                                            heart_rate: key === "heart_rate" ? String(val) : prev.heart_rate,
+                                                            health_status: statusVal,
+                                                            next_consultation_date: key === "next_consultation_date" ? String(val) : prev.next_consultation_date,
+                                                            observations: key === "doctor_observations" ? String(val) : prev.observations,
+                                                            medication_plan: key === "medication_advice" ? String(val) : prev.medication_plan,
+                                                            nutrition_plan: key === "nutritional_advice" ? String(val) : prev.nutrition_plan,
+                                                        };
+                                                    });
+                                                }}
+                                            />
                                         </div>
+                                    ) : (
+                                        <form onSubmit={submitConsultation} className="space-y-6">
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <div><label className="text-xs font-bold text-gray-500 uppercase">Sys BP</label><input type="number" required value={consultForm.systolic_bp} onChange={e => setConsultForm({ ...consultForm, systolic_bp: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="120" /></div>
+                                                <div><label className="text-xs font-bold text-gray-500 uppercase">Dia BP</label><input type="number" required value={consultForm.diastolic_bp} onChange={e => setConsultForm({ ...consultForm, diastolic_bp: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="80" /></div>
+                                                <div><label className="text-xs font-bold text-gray-500 uppercase">{t("assess.weight")}</label><input type="number" step="0.1" value={consultForm.weight_kg} onChange={e => setConsultForm({ ...consultForm, weight_kg: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="65" /></div>
+                                                <div><label className="text-xs font-bold text-gray-500 uppercase">Heart Rate</label><input type="number" value={consultForm.heart_rate} onChange={e => setConsultForm({ ...consultForm, heart_rate: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="80" /></div>
+                                            </div>
 
-                                        <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase">{t("doctor.recPlaceholder").replace("Enter clinical recommendation or prescription...", "Doctor's Observations")}</label>
-                                            <textarea required value={consultForm.observations} onChange={e => setConsultForm({ ...consultForm, observations: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="Note symptoms, sonography results, etc." />
-                                        </div>
-
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Pill className="w-3 h-3" /> {t("common.medicationAdvice")}</label>
-                                                <textarea value={consultForm.medication_plan} onChange={e => setConsultForm({ ...consultForm, medication_plan: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="1. Iron Tablets (1 daily)&#10;2. Calcium (1 daily)" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase">{t("common.status")}</label>
+                                                    <select value={consultForm.health_status} onChange={e => setConsultForm({ ...consultForm, health_status: e.target.value })} className="w-full mt-1 p-2 border rounded-md">
+                                                        <option>Stable</option>
+                                                        <option>Monitor Closely</option>
+                                                        <option>High Risk</option>
+                                                        <option>Critical Admission Required</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase">Next Consultation Date</label>
+                                                    <input type="date" value={consultForm.next_consultation_date} onChange={e => setConsultForm({ ...consultForm, next_consultation_date: e.target.value })} className="w-full mt-1 p-2 border rounded-md" />
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Apple className="w-3 h-3" /> {t("common.nutritionalAdvice")}</label>
-                                                <textarea value={consultForm.nutrition_plan} onChange={e => setConsultForm({ ...consultForm, nutrition_plan: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="Increase green leafy vegetables..." />
-                                            </div>
-                                        </div>
 
-                                        <div className="flex gap-4 pt-4 border-t border-gray-100">
-                                            <button type="button" onClick={() => setIsConsulting(false)} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">{t("common.cancel")}</button>
-                                            <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm">{t("common.save")}</button>
-                                        </div>
-                                    </form>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 uppercase">{t("doctor.recPlaceholder").replace("Enter clinical recommendation or prescription...", "Doctor's Observations")}</label>
+                                                <textarea required value={consultForm.observations} onChange={e => setConsultForm({ ...consultForm, observations: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="Note symptoms, sonography results, etc." />
+                                            </div>
+
+                                            <div className="grid md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Pill className="w-3 h-3" /> {t("common.medicationAdvice")}</label>
+                                                    <textarea value={consultForm.medication_plan} onChange={e => setConsultForm({ ...consultForm, medication_plan: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="1. Iron Tablets (1 daily)&#10;2. Calcium (1 daily)" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Apple className="w-3 h-3" /> {t("common.nutritionalAdvice")}</label>
+                                                    <textarea value={consultForm.nutrition_plan} onChange={e => setConsultForm({ ...consultForm, nutrition_plan: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="Increase green leafy vegetables..." />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-4 pt-4 border-t border-gray-100">
+                                                <button type="button" onClick={() => setIsConsulting(false)} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">{t("common.cancel")}</button>
+                                                <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm">{t("common.save")}</button>
+                                            </div>
+                                        </form>
+                                    )}
                                 </Card>
                             )}
-
                             <div className="space-y-4">
                                 <h3 className="font-heading font-medium text-xl text-gray-800 tracking-tight">{t("mother.historyTitle").replace("History", "Consultation History")}</h3>
                                 {consultations.length === 0 ? <p className="text-gray-500 italic p-8 bg-white rounded-xl border border-gray-100 text-center">No past consultations recorded.</p> : (
