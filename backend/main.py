@@ -20,7 +20,7 @@ from fastapi import File, UploadFile, Form
 from datetime import datetime, timedelta
 
 from socket_instance import sio
-from routers import telegram_bot
+from routers import telegram_bot, auth as auth_router
 
 create_db_and_tables()
 
@@ -29,6 +29,7 @@ app = FastAPI(title="MatruKavach AI API", version="1.0.0")
 socket_app = socketio.ASGIApp(sio, app)
 
 app.include_router(telegram_bot.router)
+app.include_router(auth_router.router)
 
 # Read CORS origins from environment variable, fallback to localhost:3000
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")

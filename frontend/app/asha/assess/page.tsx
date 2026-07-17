@@ -8,11 +8,12 @@ import { MapPin, ThermometerSun, Activity, HeartPulse, CheckCircle, Droplets, Wi
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/LanguageContext";
+import { translateDynamic } from "@/lib/translations";
 import { API_BASE_URL } from "@/lib/api";
 
 function AssessmentContent() {
     const searchParams = useSearchParams();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [locationCoords, setLocationCoords] = useState<{ lat: number; lon: number } | null>(null);
     const [locationName, setLocationName] = useState(t("common.loading"));
@@ -284,33 +285,32 @@ function AssessmentContent() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                        >
-                            <Card variant="glass" className="p-6 border-t-4 border-t-primary animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        >                            <Card variant="glass" className="p-6 border-t-4 border-t-primary animate-in fade-in slide-in-from-bottom-4 duration-700">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-2xl font-bold text-primary">{t("assess.resultTitle")}</h2>
-                                        <p className="text-sm text-gray-500">AI Logic: Clinical x Environmental</p>
+                                        <p className="text-sm text-gray-500">{translateDynamic("AI Logic: Clinical x Environmental", language)}</p>
                                     </div>
                                     <div className={`px-4 py-2 rounded-xl font-bold border ${getRiskColor(result.risk_level)}`}>
-                                        {result.risk_level} ({result.overall_risk_score}/10)
+                                        {translateDynamic(result.risk_level, language)} ({result.overall_risk_score}/10)
                                     </div>
                                 </div>
 
                                 <div className="mb-6 space-y-3 bg-gray-50/80 p-4 rounded-xl border border-gray-100">
                                     <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-primary" /> AI Clinical Justification
+                                        <Activity className="w-4 h-4 text-primary" /> {translateDynamic("AI Clinical Justification", language)}
                                     </h3>
                                     <p className="text-gray-700 text-sm italic border-l-2 border-primary/40 pl-3">
-                                        "{result.clinical_justification || 'Standard clinical rules applied.'}"
+                                        "{translateDynamic(result.clinical_justification || 'Standard clinical rules applied.', language)}"
                                     </p>
 
                                     {result.environmental_impact && (
                                         <div className="pt-2">
                                             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                                                <ThermometerSun className="w-4 h-4 text-orange-500" /> Environmental Impact
+                                                <ThermometerSun className="w-4 h-4 text-orange-500" /> {translateDynamic("Environmental Impact", language)}
                                             </h3>
                                             <p className="text-orange-800 text-sm mt-1 bg-orange-100 px-3 py-1.5 rounded-md inline-block">
-                                                {result.environmental_impact}
+                                                {translateDynamic(result.environmental_impact, language)}
                                             </p>
                                         </div>
                                     )}
@@ -325,7 +325,7 @@ function AssessmentContent() {
                                             <div className="flex flex-wrap gap-2">
                                                 {result.clinical_flags.map((flag: string, i: number) => (
                                                     <span key={i} className="text-xs bg-white px-2 py-1 rounded border border-red-200 text-red-700">
-                                                        {flag}
+                                                        {translateDynamic(flag, language)}
                                                     </span>
                                                 ))}
                                             </div>
@@ -340,7 +340,7 @@ function AssessmentContent() {
                                             <div className="flex flex-wrap gap-2">
                                                 {result.environmental_flags.map((flag: string, i: number) => (
                                                     <span key={i} className="text-xs bg-white px-2 py-1 rounded border border-orange-200 text-orange-700">
-                                                        {flag}
+                                                        {translateDynamic(flag, language)}
                                                     </span>
                                                 ))}
                                             </div>
@@ -353,13 +353,13 @@ function AssessmentContent() {
                                         Object.entries(result.nutrition_advice).map(([categoryName, adviceList]: [string, any], idx) => (
                                             <div key={idx}>
                                                 <h3 className="font-bold text-primary mb-3 flex items-center gap-2">
-                                                    <CheckCircle className="w-5 h-5 text-green-600" /> {categoryName}
+                                                    <CheckCircle className="w-5 h-5 text-green-600" /> {translateDynamic(categoryName, language)}
                                                 </h3>
                                                 <ul className="space-y-2">
                                                     {Array.isArray(adviceList) && adviceList.map((advice: string, i: number) => (
                                                         <li key={i} className="flex gap-3 text-sm text-gray-700 bg-white/50 p-2 rounded-lg">
                                                             <div className="min-w-[4px] h-full bg-accent rounded-full" />
-                                                            {advice}
+                                                            {translateDynamic(advice, language)}
                                                         </li>
                                                     ))}
                                                 </ul>
@@ -374,7 +374,7 @@ function AssessmentContent() {
                                                 {Array.isArray(result.nutrition_advice) && result.nutrition_advice.map((advice: string, i: number) => (
                                                     <li key={i} className="flex gap-3 text-sm text-gray-700 bg-white/50 p-2 rounded-lg">
                                                         <div className="min-w-[4px] h-full bg-accent rounded-full" />
-                                                        {advice}
+                                                        {translateDynamic(advice, language)}
                                                     </li>
                                                 ))}
                                             </ul>

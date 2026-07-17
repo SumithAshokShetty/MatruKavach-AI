@@ -35,16 +35,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_Y3VyaW91cy1zdGFsbGlvbi01NC5jbGVyay5hY2NvdW50cy5kZXYk}
-        - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_FfRdPHqLnDHto2pxO8kN0VyXDFsSZvDClwj7lvoWMd}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     container_name: matrukavach-frontend
     restart: always
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_Y3VyaW91cy1zdGFsbGlvbi01NC5jbGVyay5hY2NvdW50cy5kZXYk}
-      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_FfRdPHqLnDHto2pxO8kN0VyXDFsSZvDClwj7lvoWMd}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     depends_on:
       - backend

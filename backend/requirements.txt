@@ -18,3 +18,5 @@ cryptography
 psycopg2-binary
 numpy
 pymongo
+passlib[bcrypt]
+pyjwt

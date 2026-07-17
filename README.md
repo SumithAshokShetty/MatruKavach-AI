@@ -40,7 +40,7 @@ This diagram walks through the step-by-step workflow of a patient submitting the
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
-| **Frontend Dashboard** | Next.js (React), TailwindCSS, Clerk Auth | Clean UI for doctors and health workers with real-time reactive state. |
+| **Frontend Dashboard** | Next.js (React), TailwindCSS, Custom JWT Auth | Clean UI for doctors and health workers with real-time reactive state. |
 | **Backend API Server** | FastAPI (Python), Socket.IO (ASGI) | Asynchronous REST backend & real-time WebSocket communication. |
 | **AI Orchestration** | LangGraph, LangChain, Google Gemini API | Coordinate workflows, structured agent reasoning, and vital parameter evaluations. |
 | **Database** | SQLite, SQLModel (SQLAlchemy) | Embedded SQL database mapping models (MotherProfile, Assessment, Consultations). |
@@ -85,10 +85,6 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 # Telegram Integration (Create via BotFather)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-
-# Clerk Authentication (Next.js Dashboard Auth)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
 
 # Backend URL Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000

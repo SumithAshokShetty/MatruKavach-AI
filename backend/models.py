@@ -127,3 +127,11 @@ class VitalsInput(SQLModel):
     heat_index: float = 30.0
     aqi: float = 50.0
     chemical_exposure: float = 2.0
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(unique=True, index=True)
+    password_hash: str
+    role: str # "admin" | "doctor" | "asha"
+    associated_id: Optional[str] = None # linked to Doctor.id or AshaWorker.id
+

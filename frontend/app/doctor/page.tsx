@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Header } from "@/components/layout/Header";
@@ -14,16 +14,22 @@ export default function DoctorDashboard() {
     const { t } = useLanguage();
     const [mothers, setMothers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/mothers`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Server error");
+                return res.json();
+            })
             .then(data => {
                 setMothers(data);
+                setError(null);
                 setLoading(false);
             })
             .catch(err => {
                 console.error("Failed to fetch mothers:", err);
+                setError(err.message || "Failed to fetch");
                 setLoading(false);
             });
     }, []);
@@ -48,6 +54,15 @@ export default function DoctorDashboard() {
                             <Search className="w-4 h-4" /> {t("common.filter").replace("Filter", "Search")}
                         </button>
                     </div>
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start gap-3 shadow-sm">
+                            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold">{t("mother.patientNotFound").replace("Patient not found.", "Database Connection Offline")}</p>
+                                <p className="text-sm mt-0.5 text-red-700">Please make sure the backend server is running locally (e.g. by running start_server.bat in the backend folder).</p>
+                            </div>
+                        </div>
+                    )}
 
                     {loading ? (
                         <div className="text-center py-10 text-gray-900 animate-pulse font-medium">{t("mother.uploading").replace("Uploading...", t("asha.loadingProfiles"))}</div>

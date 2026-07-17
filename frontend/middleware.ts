@@ -1,22 +1,57 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-const isProtectedRoute = createRouteMatcher([
-    '/admin(.*)',
-    '/doctor(.*)',
-    '/asha(.*)',
-]);
+export function middleware(request: NextRequest) {
+    const token = request.cookies.get("token")?.value;
+    const { pathname } = request.nextUrl;
 
-export default clerkMiddleware(async (auth, req) => {
-    if (isProtectedRoute(req)) {
-        await auth.protect();
+    const isProtectedRoute = pathname.startsWith('/admin') || 
+                            pathname.startsWith('/doctor') || 
+                            pathname.startsWith('/asha');
+
+    if (isProtectedRoute) {
+        if (!token) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+
+        try {
+            // Decoding payload part of JWT token: Header.Payload.Signature
+            const payloadBase64 = token.split('.')[1];
+            if (!payloadBase64) {
+                throw new Error("Invalid token format");
+            }
+            
+            // Decrypt base64 at edge context
+            const payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf-8');
+            const payload = JSON.parse(payloadJson);
+            const role = payload.role;
+
+            // Route protection rules matching roles
+            if (pathname.startsWith('/admin') && role !== 'admin') {
+                return NextResponse.redirect(new URL('/', request.url));
+            }
+            if (pathname.startsWith('/doctor') && role !== 'doctor') {
+                return NextResponse.redirect(new URL('/', request.url));
+            }
+            if (pathname.startsWith('/asha') && role !== 'asha') {
+                return NextResponse.redirect(new URL('/', request.url));
+            }
+        } catch (err) {
+            console.error("Auth middleware error:", err);
+            // Clear bad cookie and redirect
+            const response = NextResponse.redirect(new URL('/login', request.url));
+            response.cookies.delete("token");
+            return response;
+        }
     }
-}, { debug: true });
+
+    return NextResponse.next();
+}
 
 export const config = {
     matcher: [
-        // Skip Next.js internals and all static files, unless found in search params
-        '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-        // Always run for API routes
-        '/(api|trpc)(.*)',
+        '/admin/:path*',
+        '/doctor/:path*',
+        '/asha/:path*',
     ],
 };

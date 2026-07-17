@@ -3,15 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe } from "lucide-react";
-import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { Menu, X, Globe, LogOut, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/components/AuthContext";
 import { useLanguage } from "@/components/LanguageContext";
 import { LANGUAGES, Language } from "@/lib/translations";
 
 export function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { isSignedIn } = useAuth();
+    const { user, logout } = useAuth();
     const { language, setLanguage, t } = useLanguage();
+    const isSignedIn = !!user;
 
     return (
         <motion.header
@@ -48,14 +49,23 @@ export function Header() {
                     </div>
 
                     {!isSignedIn && (
-                        <SignInButton mode="modal">
+                        <Link href="/login">
                             <button className="bg-black text-white px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-sm">
                                 {t("nav.signIn")}
                             </button>
-                        </SignInButton>
+                        </Link>
                     )}
                     {isSignedIn && (
-                        <UserButton appearance={{ elements: { avatarBox: "w-10 h-10" } }} />
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 text-sm">
+                                <UserIcon className="w-4 h-4 text-gray-500" />
+                                <span className="font-bold text-gray-800">{user?.username}</span>
+                                <span className="text-xs text-gray-400 capitalize">({user?.role})</span>
+                            </div>
+                            <button onClick={logout} className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors" title={t("nav.signOut")}>
+                                <LogOut className="w-5 h-5" />
+                            </button>
+                        </div>
                     )}
                 </nav>
 
@@ -77,7 +87,7 @@ export function Header() {
                     </div>
 
                     {isSignedIn && (
-                        <UserButton />
+                        <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded border capitalize">{user?.username} ({user?.role})</span>
                     )}
                     <button
                         className="p-2 text-gray-800"
@@ -102,11 +112,16 @@ export function Header() {
                             <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="py-2 hover:text-gray-500 transition-colors">{t("nav.admin")}</Link>
 
                             {!isSignedIn && (
-                                <SignInButton mode="modal">
+                                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
                                     <button className="py-2 mt-2 w-full bg-black text-white rounded-lg font-bold hover:bg-gray-800 transition-all text-center">
                                         {t("nav.signIn")}
                                     </button>
-                                </SignInButton>
+                                </Link>
+                            )}
+                            {isSignedIn && (
+                                <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="py-2 mt-2 w-full bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold hover:bg-red-100 transition-all flex items-center justify-center gap-2">
+                                    <LogOut className="w-4 h-4" /> {t("nav.signOut")}
+                                </button>
                             )}
                         </nav>
                     </motion.div>
