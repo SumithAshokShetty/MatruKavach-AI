@@ -48,3 +48,5 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+backend/error_log.txt
+backend/uploads/
