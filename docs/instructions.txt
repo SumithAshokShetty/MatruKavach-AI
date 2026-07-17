@@ -1,0 +1,5 @@
+Please save the uploaded screenshots in this directory with these exact names:
+- Save the System Architecture diagram as "architecture.png"
+- Save the User Flow & Processing Lifecycle diagram as "user_flow.png"
+
+This will allow them to be displayed perfectly within the root README.md.
