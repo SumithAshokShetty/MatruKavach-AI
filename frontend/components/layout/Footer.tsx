@@ -2,9 +2,11 @@
 
 import React from "react";
 import Link from "next/link";
-import { Linkedin, Twitter, Youtube } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
 
 export function Footer() {
+    const { t } = useLanguage();
+
     return (
         <footer className="w-full relative bg-transparent pt-24 pb-12 px-4 border-t border-gray-100/50 mt-auto overflow-hidden">
             
@@ -19,29 +21,29 @@ export function Footer() {
                     
                     <div className="col-span-1">
                         <h2 className="text-3xl font-heading font-medium tracking-tight text-black mb-2">
-                            MatruKavach AI
+                            {t("nav.logo")}
                         </h2>
-                        <p className="text-gray-500 text-sm mb-6">Environment-Aware Analytics</p>
+                        <p className="text-gray-500 text-sm mb-6">{t("footer.tagline")}</p>
                     </div>
 
                     <div className="flex flex-col space-y-4">
-                        <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-2">Products</h4>
-                        <Link href="/asha" className="text-gray-500 hover:text-black transition-colors text-sm">ASHA Portal</Link>
-                        <Link href="/doctor" className="text-gray-500 hover:text-black transition-colors text-sm">Doctor Portal</Link>
-                        <Link href="/admin" className="text-gray-500 hover:text-black transition-colors text-sm">Orchestrator Admin</Link>
+                        <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-2">{t("footer.products")}</h4>
+                        <Link href="/asha" className="text-gray-500 hover:text-black transition-colors text-sm">{t("nav.ashaPortal")}</Link>
+                        <Link href="/doctor" className="text-gray-500 hover:text-black transition-colors text-sm">{t("nav.doctorPortal")}</Link>
+                        <Link href="/admin" className="text-gray-500 hover:text-black transition-colors text-sm">{t("admin.dashboardTitle")}</Link>
                     </div>
 
                     <div className="flex flex-col space-y-4">
-                        <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-2">Company</h4>
-                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">About us</Link>
-                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">Blogs</Link>
-                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">Careers</Link>
-                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">Terms of service</Link>
-                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">Privacy Policy</Link>
+                        <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-2">{t("footer.company")}</h4>
+                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">{t("footer.aboutUs")}</Link>
+                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">{t("footer.blogs")}</Link>
+                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">{t("footer.careers")}</Link>
+                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">{t("footer.terms")}</Link>
+                        <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm">{t("footer.privacy")}</Link>
                     </div>
 
                     <div className="flex flex-col space-y-4">
-                        <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-2">Socials</h4>
+                        <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-2">{t("footer.socials")}</h4>
                         <Link href="#" className="text-gray-500 hover:text-black transition-colors text-sm flex items-center gap-2">
                             LinkedIn
                         </Link>
@@ -55,10 +57,11 @@ export function Footer() {
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-100/50 text-xs text-gray-400">
-                    <p>Copyright MatruKavach AI 2026</p>
-                    <p className="mt-4 md:mt-0">All rights reserved, Built in India</p>
+                    <p>{t("footer.copyright")}</p>
+                    <p className="mt-4 md:mt-0">{t("footer.rights")}</p>
                 </div>
             </div>
         </footer>
     );
 }
+

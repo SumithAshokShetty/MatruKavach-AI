@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Serif_Text } from "next/font/google";
 import { GeistSans } from 'geist/font/sans';
 import { ClerkProvider } from '@clerk/nextjs';
+import { LanguageProvider } from "@/components/LanguageContext";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -33,9 +34,12 @@ export default function RootLayout({
         <body
           className={`${bricolage.variable} ${dmSerif.variable} ${GeistSans.variable} font-body antialiased`}
         >
-          {children}
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
         </body>
       </html>
     </ClerkProvider>
   );
 }
+

@@ -6,22 +6,30 @@ import { Card } from "@/components/ui/Card";
 import { Plus, Search, MapPin, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
+import { useLanguage } from "@/components/LanguageContext";
 
 import { API_BASE_URL } from "@/lib/api";
 
 export default function AshaDashboard() {
+    const { t } = useLanguage();
     const [mothers, setMothers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/mothers`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Server error");
+                return res.json();
+            })
             .then(data => {
                 setMothers(data);
+                setError(null);
                 setLoading(false);
             })
             .catch(err => {
                 console.error("Failed to fetch mothers:", err);
+                setError(err.message || "Failed to fetch");
                 setLoading(false);
             });
     }, []);
@@ -30,25 +38,35 @@ export default function AshaDashboard() {
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-heading font-bold text-gray-900">ASHA Dashboard</h1>
-                    <p className="text-gray-500">Manage mother profiles and assessments</p>
+                    <h1 className="text-3xl font-heading font-bold text-gray-900">{t("asha.dashboardTitle")}</h1>
+                    <p className="text-gray-500">{t("asha.dashboardSub")}</p>
                 </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 w-full">
-                    <Input placeholder="Search by name or ID..." className="bg-white w-full" />
+                    <Input placeholder={t("asha.searchPlaceholder")} className="bg-white w-full" />
                 </div>
-                <Button variant="secondary" className="w-full sm:w-auto">Filter</Button>
+                <Button variant="secondary" className="w-full sm:w-auto">{t("common.filter")}</Button>
             </div>
 
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start gap-3 shadow-sm">
+                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="font-bold">{t("mother.patientNotFound").replace("Patient not found.", "Database Connection Offline")}</p>
+                        <p className="text-sm mt-0.5 text-red-700">Please make sure the backend server is running locally (e.g. by running start_server.bat in the backend folder).</p>
+                    </div>
+                </div>
+            )}
+
             {loading ? (
-                <div className="text-center py-10 text-gray-900 animate-pulse">Loading Patient Profiles...</div>
+                <div className="text-center py-10 text-gray-900 animate-pulse">{t("asha.loadingProfiles")}</div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {mothers.length === 0 && (
                         <div className="col-span-3 text-center py-10 text-gray-500">
-                            No records found. Please seed the database or add a new mother.
+                            {t("asha.noRecords")}
                         </div>
                     )}
 
@@ -61,15 +79,15 @@ export default function AshaDashboard() {
                                         <p className="text-sm text-gray-500">ID: {mother.id}</p>
                                     </div>
                                     <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                                        Active
+                                        {t("common.active")}
                                     </span>
                                 </div>
                                 <div className="space-y-2 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-gray-400" /> <span>{mother.location || "Location not provided"}</span>
+                                        <MapPin className="w-4 h-4 text-gray-400" /> <span>{mother.location || t("mother.noDocs").replace("documents uploaded yet.", "location provided")}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-gray-500">Age:</span> {mother.age} | {mother.gestational_age_weeks} Weeks
+                                        <span className="font-semibold text-gray-500">{t("common.age")}:</span> {mother.age} | {mother.gestational_age_weeks} {t("common.weeks")}
                                     </div>
                                 </div>
                             </Card>
@@ -80,3 +98,4 @@ export default function AshaDashboard() {
         </div>
     );
 }
+

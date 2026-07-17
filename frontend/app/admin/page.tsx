@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Shield, RefreshCw, Users, UserPlus, Activity, CheckCircle2, AlertTriangle, Edit2, Trash2, ArrowRight } from "lucide-react";
+import { Shield, RefreshCw, Users, UserPlus, Activity, CheckCircle2, AlertTriangle, Edit2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/components/LanguageContext";
 
 import { API_BASE_URL } from "@/lib/api";
 
 export default function AdminDashboard() {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState("overview");
     const [stats, setStats] = useState<any>(null);
     const [mothers, setMothers] = useState<any[]>([]);
@@ -55,7 +56,6 @@ export default function AdminDashboard() {
             });
 
             if (res.ok) {
-
                 fetchData();
             } else {
                 alert("Failed to assign.");
@@ -65,12 +65,12 @@ export default function AdminDashboard() {
         }
     };
 
-    if (loading && !stats) return <div className="min-h-screen flex items-center justify-center font-body text-gray-500">Loading Dashboard...</div>;
+    if (loading && !stats) return <div className="min-h-screen flex items-center justify-center font-body text-gray-500">{t("common.loading")}</div>;
 
     const tabs = [
         { id: "overview", label: "Overview" },
-        { id: "doctors", label: "Doctors" },
-        { id: "ashas", label: "ASHA Workers" },
+        { id: "doctors", label: t("nav.doctorPortal").replace(" Portal", "s") },
+        { id: "ashas", label: t("nav.ashaPortal").replace(" Portal", " Workers") },
         { id: "mothers", label: "Mothers" }
     ];
 
@@ -82,30 +82,30 @@ export default function AdminDashboard() {
 
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-gray-900">Admin Dashboard</h1>
-                        <p className="text-gray-500">Manage system users and assignments</p>
+                        <h1 className="text-3xl font-heading font-bold text-gray-900">{t("admin.dashboardTitle")}</h1>
+                        <p className="text-gray-500">{t("admin.dashboardSub")}</p>
                     </div>
                     <div className="flex items-center gap-4 mt-4 md:mt-0">
                         <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-xl font-bold flex items-center gap-2 border border-yellow-200">
-                            <AlertTriangle className="w-4 h-4" /> Approvals (0)
+                            <AlertTriangle className="w-4 h-4" /> {t("doctor.clinicalAlerts").replace("Clinical Alerts", "Approvals")} (0)
                         </div>
                         <button onClick={fetchData} className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-colors">
-                            <RefreshCw className="w-4 h-4" /> Refresh
+                            <RefreshCw className="w-4 h-4" /> {t("admin.agentStatus").replace("Status", "Refresh")}
                         </button>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <Card className="p-6 border-l-4 border-l-pink-500 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500 mb-1">Total Mothers</p>
+                        <p className="text-sm font-bold text-gray-500 mb-1">{t("admin.totalMothers")}</p>
                         <p className="text-4xl font-black text-gray-900">{stats?.total_mothers}</p>
                     </Card>
                     <Card className="p-6 border-l-4 border-l-indigo-500 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500 mb-1">Doctors</p>
+                        <p className="text-sm font-bold text-gray-500 mb-1">{t("nav.doctorPortal").replace(" Portal", "s")}</p>
                         <p className="text-4xl font-black text-gray-900">{stats?.total_doctors}</p>
                     </Card>
                     <Card className="p-6 border-l-4 border-l-purple-500 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500 mb-1">ASHA Workers</p>
+                        <p className="text-sm font-bold text-gray-500 mb-1">{t("nav.ashaPortal").replace(" Portal", " Workers")}</p>
                         <p className="text-4xl font-black text-gray-900">{stats?.total_ashas}</p>
                     </Card>
                     <Card className="p-6 border-l-4 border-l-green-500 shadow-sm">
@@ -148,11 +148,11 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
                                     <p className="text-4xl font-black text-indigo-700">{stats?.total_doctors}</p>
-                                    <p className="text-xs font-bold text-indigo-800 mt-2 uppercase tracking-wider">Active Doctors</p>
+                                    <p className="text-xs font-bold text-indigo-800 mt-2 uppercase tracking-wider">{t("admin.agentStatus").replace("Status", "Active")} Doctors</p>
                                 </div>
                                 <div className="bg-purple-50 border border-purple-200 p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
                                     <p className="text-4xl font-black text-purple-700">{stats?.total_ashas}</p>
-                                    <p className="text-xs font-bold text-purple-800 mt-2 uppercase tracking-wider">Active ASHA Workers</p>
+                                    <p className="text-xs font-bold text-purple-800 mt-2 uppercase tracking-wider">{t("admin.agentStatus").replace("Status", "Active")} ASHA Workers</p>
                                 </div>
                             </div>
 
@@ -205,12 +205,12 @@ export default function AdminDashboard() {
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-gray-50/80 border-b border-gray-100">
-                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</th>
-                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Location</th>
+                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t("admin.name")}</th>
+                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t("common.phone")}</th>
+                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t("common.location")}</th>
                                                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">ASHA Worker</th>
                                                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Doctor</th>
-                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
+                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">{t("common.status")}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -321,3 +321,4 @@ export default function AdminDashboard() {
         </div>
     );
 }
+

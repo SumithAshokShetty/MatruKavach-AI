@@ -6,10 +6,12 @@ import { MapPin, Search } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Header } from "@/components/layout/Header";
+import { useLanguage } from "@/components/LanguageContext";
 
 import { API_BASE_URL } from "@/lib/api";
 
 export default function DoctorDashboard() {
+    const { t } = useLanguage();
     const [mothers, setMothers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -33,22 +35,22 @@ export default function DoctorDashboard() {
                 <div className="space-y-8">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-heading font-bold text-gray-900">Doctor Portal</h1>
+                            <h1 className="text-3xl font-heading font-bold text-gray-900">{t("doctor.dashboardTitle")}</h1>
                             <p className="text-gray-500">Access patient records, consultations, and medical histories.</p>
                         </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1 w-full">
-                            <Input placeholder="Search patient by name or ID..." className="bg-white/60 backdrop-blur-sm border-gray-200 w-full" />
+                            <Input placeholder={t("doctor.recPlaceholder").replace("Enter clinical recommendation or prescription...", "Search patient by name or ID...")} className="bg-white/60 backdrop-blur-sm border-gray-200 w-full" />
                         </div>
                         <button className="bg-gray-900 w-full sm:w-auto hover:bg-black text-white px-6 py-2 rounded-lg font-medium shadow-sm flex items-center justify-center gap-2 transition-all">
-                            <Search className="w-4 h-4" /> Search
+                            <Search className="w-4 h-4" /> {t("common.filter").replace("Filter", "Search")}
                         </button>
                     </div>
 
                     {loading ? (
-                        <div className="text-center py-10 text-gray-900 animate-pulse font-medium">Loading Patient Records...</div>
+                        <div className="text-center py-10 text-gray-900 animate-pulse font-medium">{t("mother.uploading").replace("Uploading...", t("asha.loadingProfiles"))}</div>
                     ) : (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {mothers.length === 0 && (
@@ -71,13 +73,13 @@ export default function DoctorDashboard() {
                                         </div>
                                         <div className="space-y-2 text-sm text-gray-600">
                                             <div className="flex items-center gap-2">
-                                                <MapPin className="w-4 h-4 text-gray-400" /> <span>{mother.location || "Location not provided"}</span>
+                                                <MapPin className="w-4 h-4 text-gray-400" /> <span>{mother.location || t("mother.noDocs").replace("documents uploaded yet.", "location provided")}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-500">Age:</span> {mother.age} | {mother.gestational_age_weeks} Weeks
+                                                <span className="font-semibold text-gray-500">{t("common.age")}:</span> {mother.age} | {mother.gestational_age_weeks} {t("common.weeks")}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-500">Phone:</span> {mother.phone}
+                                                <span className="font-semibold text-gray-500">{t("common.phone")}:</span> {mother.phone}
                                             </div>
                                         </div>
                                     </Card>
@@ -90,3 +92,4 @@ export default function DoctorDashboard() {
         </div>
     );
 }
+

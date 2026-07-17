@@ -4,16 +4,18 @@ import React, { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { MapPin, ThermometerSun, Activity, HeartPulse, AlertTriangle, CheckCircle, Droplets, Wind, AlertCircle } from "lucide-react";
+import { MapPin, ThermometerSun, Activity, HeartPulse, CheckCircle, Droplets, Wind, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
+import { useLanguage } from "@/components/LanguageContext";
 import { API_BASE_URL } from "@/lib/api";
 
 function AssessmentContent() {
     const searchParams = useSearchParams();
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [locationCoords, setLocationCoords] = useState<{ lat: number; lon: number } | null>(null);
-    const [locationName, setLocationName] = useState("Locating...");
+    const [locationName, setLocationName] = useState(t("common.loading"));
     const [envData, setEnvData] = useState<any>(null);
     const [error, setError] = useState("");
     const [result, setResult] = useState<any>(null);
@@ -64,7 +66,7 @@ function AssessmentContent() {
                 }
             );
         }
-    }, [searchParams]);
+    }, [searchParams, t]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -142,10 +144,10 @@ function AssessmentContent() {
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-20">
             <div>
-                <h1 className="text-4xl font-heading font-extrabold text-primary tracking-tight">Health Assessment</h1>
+                <h1 className="text-4xl font-heading font-extrabold text-primary tracking-tight">{t("assess.title")}</h1>
                 <div className="flex items-center gap-2 text-primary/70 mt-3 font-medium bg-white/50 w-fit px-3 py-1.5 rounded-full border border-primary/10 shadow-sm">
                     <MapPin className="w-5 h-5 text-accent" />
-                    <span>Location: {locationName}</span>
+                    <span>{t("assess.location")}: {locationName}</span>
                 </div>
             </div>
 
@@ -153,25 +155,25 @@ function AssessmentContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Card className="p-4 bg-blue-50/50 border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
                         <div>
-                            <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Temperature</p>
+                            <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">{t("assess.temp")}</p>
                             <p className="text-xl font-bold text-blue-900">{envData.temperature_c}°C</p>
-                            <p className="text-xs text-blue-600/70">Feels like {envData.heat_index}°C</p>
+                            <p className="text-xs text-blue-600/70">{t("assess.feelsLike")} {envData.heat_index}°C</p>
                         </div>
                         <ThermometerSun className="w-8 h-8 text-blue-300 self-end sm:self-auto" />
                     </Card>
                     <Card className="p-4 bg-orange-50/50 border-orange-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
                         <div>
-                            <p className="text-xs font-bold text-orange-800 uppercase tracking-wider">Air Quality (AQI)</p>
+                            <p className="text-xs font-bold text-orange-800 uppercase tracking-wider">{t("assess.aqi")}</p>
                             <p className="text-xl font-bold text-orange-900">{Math.round(envData.aqi_pm25)}</p>
-                            <p className="text-xs text-orange-600/70">PM2.5 Levels</p>
+                            <p className="text-xs text-orange-600/70">{t("assess.pmLevels")}</p>
                         </div>
                         <Wind className="w-8 h-8 text-orange-300 self-end sm:self-auto" />
                     </Card>
                     <Card className="p-4 bg-purple-50/50 border-purple-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
                         <div>
-                            <p className="text-xs font-bold text-purple-800 uppercase tracking-wider">Toxin Exposure</p>
+                            <p className="text-xs font-bold text-purple-800 uppercase tracking-wider">{t("assess.toxin")}</p>
                             <p className="text-xl font-bold text-purple-900">{envData.chemical_exposure.toFixed(1)}/10</p>
-                            <p className="text-xs text-purple-600/70">Estimated Risk</p>
+                            <p className="text-xs text-purple-600/70">{t("assess.estRisk")}</p>
                         </div>
                         <AlertCircle className="w-8 h-8 text-purple-300 self-end sm:self-auto" />
                     </Card>
@@ -184,18 +186,18 @@ function AssessmentContent() {
                         <div className="p-2 bg-accent/10 rounded-lg">
                             <Activity className="w-6 h-6 text-accent" />
                         </div>
-                        <h2 className="text-2xl font-bold text-primary">Clinical Form</h2>
+                        <h2 className="text-2xl font-bold text-primary">{t("assess.clinicalForm")}</h2>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         
                         <div className="space-y-3">
                             <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                <HeartPulse className="w-4 h-4 text-red-500" /> Blood Pressure (mmHg)
+                                <Activity className="w-4 h-4 text-red-500" /> {t("assess.bp")}
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
-                                    placeholder="Systolic (e.g. 120)"
+                                    placeholder={t("assess.systolic")}
                                     type="number"
                                     value={formData.systolic}
                                     onChange={(e) => setFormData({ ...formData, systolic: e.target.value })}
@@ -203,7 +205,7 @@ function AssessmentContent() {
                                     required
                                 />
                                 <Input
-                                    placeholder="Diastolic (e.g. 80)"
+                                    placeholder={t("assess.diastolic")}
                                     type="number"
                                     value={formData.diastolic}
                                     onChange={(e) => setFormData({ ...formData, diastolic: e.target.value })}
@@ -216,7 +218,7 @@ function AssessmentContent() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-blue-500" /> Weight (kg)
+                                    <Activity className="w-4 h-4 text-blue-500" /> {t("assess.weight")}
                                 </label>
                                 <Input
                                     placeholder="e.g. 65"
@@ -229,7 +231,7 @@ function AssessmentContent() {
                             </div>
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                    <Droplets className="w-4 h-4 text-red-600" /> Hemoglobin (g/dL)
+                                    <Droplets className="w-4 h-4 text-red-600" /> {t("assess.hemoglobin")}
                                 </label>
                                 <Input
                                     placeholder="e.g. 11.5"
@@ -245,7 +247,7 @@ function AssessmentContent() {
 
                         <div className="space-y-3">
                             <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                <ThermometerSun className="w-4 h-4 text-orange-500" /> Random Glucose (mg/dL)
+                                <ThermometerSun className="w-4 h-4 text-orange-500" /> {t("assess.glucose")}
                             </label>
                             <Input
                                 placeholder="e.g. 100"
@@ -259,18 +261,18 @@ function AssessmentContent() {
 
                         <div className="pt-4 border-t border-gray-100">
                             <label className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
-                                <AlertCircle className="w-4 h-4 text-purple-500" /> Other Symptoms (Optional)
+                                <AlertCircle className="w-4 h-4 text-purple-500" /> {t("assess.symptoms")}
                             </label>
                             <textarea
                                 className="w-full h-24 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all shadow-inner resize-none placeholder:text-gray-400"
-                                placeholder="Describe any additional concerns here... e.g. swollen ankles, persistent headache"
+                                placeholder={t("assess.symptomsPlaceholder")}
                                 value={formData.otherSymptoms}
                                 onChange={(e) => setFormData({ ...formData, otherSymptoms: e.target.value })}
                             />
                         </div>
 
                         <Button type="submit" className="w-full py-6 text-lg rounded-xl mt-4 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all font-bold" isLoading={loading}>
-                            Analyze Risk with AI
+                            {loading ? t("assess.analyzing") : t("assess.runAssessment")}
                         </Button>
                         {error && <p className="text-alert text-sm text-center mt-3 font-medium bg-red-50 p-2 rounded-lg">{error}</p>}
                     </form>
@@ -286,7 +288,7 @@ function AssessmentContent() {
                             <Card variant="glass" className="p-6 border-t-4 border-t-primary animate-in fade-in slide-in-from-bottom-4 duration-700">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-primary">Risk Analysis</h2>
+                                        <h2 className="text-2xl font-bold text-primary">{t("assess.resultTitle")}</h2>
                                         <p className="text-sm text-gray-500">AI Logic: Clinical x Environmental</p>
                                     </div>
                                     <div className={`px-4 py-2 rounded-xl font-bold border ${getRiskColor(result.risk_level)}`}>
@@ -318,7 +320,7 @@ function AssessmentContent() {
                                     {result.clinical_flags.length > 0 && (
                                         <div className="p-3 bg-red-50 rounded-lg border border-red-100">
                                             <h4 className="text-sm font-semibold text-red-800 mb-2 flex items-center gap-2">
-                                                <HeartPulse className="w-4 h-4" /> Clinical Alerts
+                                                <Activity className="w-4 h-4 text-red-500" /> {t("assess.clinicalFlags")}
                                             </h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {result.clinical_flags.map((flag: string, i: number) => (
@@ -333,7 +335,7 @@ function AssessmentContent() {
                                     {result.environmental_flags.length > 0 && (
                                         <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
                                             <h4 className="text-sm font-semibold text-orange-800 mb-2 flex items-center gap-2">
-                                                <ThermometerSun className="w-4 h-4" /> Planetary Intelligence Insights
+                                                <ThermometerSun className="w-4 h-4" /> {t("assess.envFlags")}
                                             </h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {result.environmental_flags.map((flag: string, i: number) => (
@@ -366,7 +368,7 @@ function AssessmentContent() {
                                     ) : (
                                         <div>
                                             <h3 className="font-bold text-primary mb-3 flex items-center gap-2">
-                                                <CheckCircle className="w-5 h-5 text-green-600" /> Recommended Action
+                                                <CheckCircle className="w-5 h-5 text-green-600" /> {t("assess.nutAdvice")}
                                             </h3>
                                             <ul className="space-y-2">
                                                 {Array.isArray(result.nutrition_advice) && result.nutrition_advice.map((advice: string, i: number) => (
@@ -386,14 +388,14 @@ function AssessmentContent() {
                                     <div className="p-2 bg-blue-100 rounded-lg">
                                         <Activity className="w-5 h-5 text-blue-600" />
                                     </div>
-                                    <h2 className="text-xl font-bold text-gray-800">Frontline Consultation</h2>
+                                    <h2 className="text-xl font-bold text-gray-800">{t("assess.consultNote")}</h2>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-4">
                                     Record your direct observations and advice given to the mother based on the AI Risk Analysis.
                                 </p>
                                 <textarea
                                     className="w-full h-32 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm resize-none placeholder:text-gray-400"
-                                    placeholder="Enter consultation notes here... e.g. 'Patient advised to rest in a cool room. Reminded her to drink 3L water.'"
+                                    placeholder={t("assess.consultPlaceholder")}
                                     value={consultationNote}
                                     onChange={(e) => setConsultationNote(e.target.value)}
                                     disabled={noteSaved}
@@ -406,7 +408,7 @@ function AssessmentContent() {
                                         isLoading={noteSaving}
                                         disabled={noteSaved || !consultationNote}
                                     >
-                                        {noteSaved ? "Note Saved ✓" : "Save Consultation Note"}
+                                        {noteSaved ? t("assess.noteSaved") : t("assess.saveNote")}
                                     </Button>
                                 </div>
                             </Card>

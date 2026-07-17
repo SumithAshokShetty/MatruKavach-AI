@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/Button";
 import { MapPin, Calendar, Clock, Activity, FileText, Pill, FileUp, Apple, ClipboardList, CheckCircle2, MessageSquare, AlertCircle, RefreshCw } from "lucide-react";
 import { ChatWindow } from "@/components/ChatWindow";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/components/LanguageContext";
 
 export default function DoctorPatientDetail() {
     const params = useParams();
     const router = useRouter();
     const motherId = params.mother_id as string;
+    const { t } = useLanguage();
 
     const [mother, setMother] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);
@@ -124,14 +126,14 @@ export default function DoctorPatientDetail() {
         }
     };
 
-    if (loading) return <div className="text-center py-20 text-gray-500 font-medium">Loading Clinical Data...</div>;
-    if (!mother) return <div className="text-center py-20 text-red-500">Patient not found.</div>;
+    if (loading) return <div className="text-center py-20 text-gray-500 font-medium">{t("common.loading")}</div>;
+    if (!mother) return <div className="text-center py-20 text-red-500">{t("mother.patientNotFound")}</div>;
 
     const tabs = [
-        { id: "consultations", label: "Consultation & Rx", icon: ClipboardList },
-        { id: "assessments", label: "ASHA Assessments", icon: Activity },
-        { id: "documents", label: "Medical Documents", icon: FileText },
-        { id: "chat", label: "AI & Patient Chat", icon: MessageSquare }
+        { id: "consultations", label: t("doctor.recommendations").replace("Doctor Clinical Directive", "Consultation & Rx"), icon: ClipboardList },
+        { id: "assessments", label: t("mother.assessmentsTab"), icon: Activity },
+        { id: "documents", label: t("mother.recordsTitle").replace("Health Records & Documents", "Medical Documents"), icon: FileText },
+        { id: "chat", label: t("mother.chatTab"), icon: MessageSquare }
     ];
 
     return (
@@ -145,19 +147,19 @@ export default function DoctorPatientDetail() {
                         <div className="flex items-center gap-4 mb-2">
                             <h1 className="text-3xl font-heading font-bold">{mother.name}</h1>
                             <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full border border-green-200 uppercase tracking-widest">
-                                Active Patient
+                                {t("common.active")}
                             </span>
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600 font-medium">
-                            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> {mother.location || "Location not set"}</span>
-                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-gray-400" /> Age: {mother.age}</span>
-                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-gray-400" /> {mother.gestational_age_weeks} Weeks Pregnant</span>
+                            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> {mother.location || t("mother.noDocs").replace("documents uploaded yet.", "location provided")}</span>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-gray-400" /> {t("common.age")}: {mother.age}</span>
+                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-gray-400" /> {mother.gestational_age_weeks} {t("common.weeks")}</span>
                         </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4 mt-4 md:mt-0">
                         <button onClick={() => { setActiveTab("consultations"); setIsConsulting(true); }} className="w-full sm:w-auto px-6 py-3 bg-gray-900 text-white font-medium rounded-xl hover:bg-black transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
-                            + New Consultation
+                            + {t("doctor.recommendations").replace("Doctor Clinical Directive", "New Consultation")}
                         </button>
                     </div>
                 </div>
@@ -190,13 +192,13 @@ export default function DoctorPatientDetail() {
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             <div><label className="text-xs font-bold text-gray-500 uppercase">Sys BP</label><input type="number" required value={consultForm.systolic_bp} onChange={e => setConsultForm({ ...consultForm, systolic_bp: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="120" /></div>
                                             <div><label className="text-xs font-bold text-gray-500 uppercase">Dia BP</label><input type="number" required value={consultForm.diastolic_bp} onChange={e => setConsultForm({ ...consultForm, diastolic_bp: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="80" /></div>
-                                            <div><label className="text-xs font-bold text-gray-500 uppercase">Weight (kg)</label><input type="number" step="0.1" value={consultForm.weight_kg} onChange={e => setConsultForm({ ...consultForm, weight_kg: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="65" /></div>
+                                            <div><label className="text-xs font-bold text-gray-500 uppercase">{t("assess.weight")}</label><input type="number" step="0.1" value={consultForm.weight_kg} onChange={e => setConsultForm({ ...consultForm, weight_kg: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="65" /></div>
                                             <div><label className="text-xs font-bold text-gray-500 uppercase">Heart Rate</label><input type="number" value={consultForm.heart_rate} onChange={e => setConsultForm({ ...consultForm, heart_rate: e.target.value })} className="w-full mt-1 p-2 border rounded-md" placeholder="80" /></div>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Health Status</label>
+                                                <label className="text-xs font-bold text-gray-500 uppercase">{t("common.status")}</label>
                                                 <select value={consultForm.health_status} onChange={e => setConsultForm({ ...consultForm, health_status: e.target.value })} className="w-full mt-1 p-2 border rounded-md">
                                                     <option>Stable</option>
                                                     <option>Monitor Closely</option>
@@ -211,31 +213,31 @@ export default function DoctorPatientDetail() {
                                         </div>
 
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Doctor's Observations</label>
+                                            <label className="text-xs font-bold text-gray-500 uppercase">{t("doctor.recPlaceholder").replace("Enter clinical recommendation or prescription...", "Doctor's Observations")}</label>
                                             <textarea required value={consultForm.observations} onChange={e => setConsultForm({ ...consultForm, observations: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="Note symptoms, sonography results, etc." />
                                         </div>
 
                                         <div className="grid md:grid-cols-2 gap-6">
                                             <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Pill className="w-3 h-3" /> Medication Plan (Rx)</label>
+                                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Pill className="w-3 h-3" /> {t("common.medicationAdvice")}</label>
                                                 <textarea value={consultForm.medication_plan} onChange={e => setConsultForm({ ...consultForm, medication_plan: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="1. Iron Tablets (1 daily)&#10;2. Calcium (1 daily)" />
                                             </div>
                                             <div>
-                                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Apple className="w-3 h-3" /> Nutrition Plan</label>
+                                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><Apple className="w-3 h-3" /> {t("common.nutritionalAdvice")}</label>
                                                 <textarea value={consultForm.nutrition_plan} onChange={e => setConsultForm({ ...consultForm, nutrition_plan: e.target.value })} className="w-full mt-1 p-3 border rounded-md min-h-[100px]" placeholder="Increase green leafy vegetables..." />
                                             </div>
                                         </div>
 
                                         <div className="flex gap-4 pt-4 border-t border-gray-100">
-                                            <button type="button" onClick={() => setIsConsulting(false)} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">Cancel</button>
-                                            <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm">Save & Send Rx to Patient</button>
+                                            <button type="button" onClick={() => setIsConsulting(false)} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">{t("common.cancel")}</button>
+                                            <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm">{t("common.save")}</button>
                                         </div>
                                     </form>
                                 </Card>
                             )}
 
                             <div className="space-y-4">
-                                <h3 className="font-heading font-medium text-xl text-gray-800 tracking-tight">Consultation History</h3>
+                                <h3 className="font-heading font-medium text-xl text-gray-800 tracking-tight">{t("mother.historyTitle").replace("History", "Consultation History")}</h3>
                                 {consultations.length === 0 ? <p className="text-gray-500 italic p-8 bg-white rounded-xl border border-gray-100 text-center">No past consultations recorded.</p> : (
                                     consultations.map(c => (
                                         <Card key={c.id} className="p-6 bg-white shadow-sm border border-gray-100 hover:border-gray-200 transition-colors">
@@ -260,6 +262,7 @@ export default function DoctorPatientDetail() {
                                                     </div>
                                                 )}
                                             </div>
+
                                             <div className="space-y-4">
                                                 <div>
                                                     <h4 className="text-xs font-bold text-gray-500 uppercase mb-1">Observations</h4>
@@ -268,13 +271,13 @@ export default function DoctorPatientDetail() {
                                                 <div className="grid md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                                                     {c.medication_plan && (
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-gray-900 uppercase mb-2 flex items-center gap-1"><Pill className="w-3 h-3" /> Medication</h4>
+                                                            <h4 className="text-xs font-bold text-gray-900 uppercase mb-2 flex items-center gap-1"><Pill className="w-3 h-3" /> {t("common.medicationAdvice")}</h4>
                                                             <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.medication_plan}</p>
                                                         </div>
                                                     )}
                                                     {c.nutrition_plan && (
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-gray-900 uppercase mb-2 flex items-center gap-1"><Apple className="w-3 h-3" /> Nutrition</h4>
+                                                            <h4 className="text-xs font-bold text-gray-900 uppercase mb-2 flex items-center gap-1"><Apple className="w-3 h-3" /> {t("common.nutritionalAdvice")}</h4>
                                                             <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.nutrition_plan}</p>
                                                         </div>
                                                     )}
@@ -319,22 +322,22 @@ export default function DoctorPatientDetail() {
                                                     <span className="ml-2 font-bold">{record.vitals.systolic_bp}/{record.vitals.diastolic_bp} mmHg</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-500 font-medium">Glucose:</span>
+                                                    <span className="text-gray-500 font-medium">{t("assess.glucose").replace("Random Glucose (mg/dL)", "Glucose")}:</span>
                                                     <span className="ml-2 font-bold">{record.vitals.glucose} mg/dL</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-500 font-medium">Hemoglobin:</span>
+                                                    <span className="text-gray-500 font-medium">{t("assess.hemoglobin").replace("Hemoglobin (g/dL)", "Hemoglobin")}:</span>
                                                     <span className="ml-2 font-bold">{record.vitals.hemoglobin} g/dL</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-500 font-medium">Weight:</span>
+                                                    <span className="text-gray-500 font-medium">{t("assess.weight").replace("Weight (kg)", "Weight")}:</span>
                                                     <span className="ml-2 font-bold">{record.vitals.weight_kg} kg</span>
                                                 </div>
                                             </div>
 
                                             {flags.length > 0 && (
                                                 <div>
-                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><AlertCircle className="w-3 h-3 text-red-500" /> Clinical Flags</p>
+                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><AlertCircle className="w-3 h-3 text-red-500" /> {t("common.clinicalFlags")}</p>
                                                     <ul className="list-none space-y-1">
                                                         {flags.map((flag: string, idx: number) => (
                                                             <li key={idx} className="text-sm flex items-start gap-2 bg-red-50 text-red-800 px-3 py-2 rounded-md">
@@ -351,7 +354,7 @@ export default function DoctorPatientDetail() {
                                                 <div className="mt-4 bg-blue-50/70 p-4 rounded-xl border border-blue-100/50 shadow-sm relative overflow-hidden">
                                                     <div className="absolute top-0 left-0 w-1 h-full bg-blue-400" />
                                                     <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                                        <MessageSquare className="w-4 h-4 text-blue-500" /> Frontline Consultation Note
+                                                        <MessageSquare className="w-4 h-4 text-blue-500" /> {t("assess.consultNote")}
                                                     </h4>
                                                     <p className="text-sm text-gray-700 italic leading-relaxed">
                                                         "{record.risk.asha_consultation_note}"
@@ -369,16 +372,16 @@ export default function DoctorPatientDetail() {
                     {activeTab === "documents" && (
                         <div>
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-heading text-xl font-medium tracking-tight">Patient Documents & Reports</h3>
+                                <h3 className="font-heading text-xl font-medium tracking-tight">{t("mother.recordsTitle")}</h3>
                                 <div>
                                     <input type="file" id="docUpload" className="hidden" onChange={handleDocumentUpload} />
                                     <label htmlFor="docUpload" className="cursor-pointer bg-white border border-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
-                                        <FileUp className="w-4 h-4" /> Upload Report
+                                        <FileUp className="w-4 h-4" /> {t("mother.uploadReport")}
                                     </label>
                                 </div>
                             </div>
 
-                            {documents.length === 0 ? <p className="text-gray-500 bg-white p-8 rounded-xl text-center border border-gray-100">No documents uploaded yet.</p> : (
+                            {documents.length === 0 ? <p className="text-gray-500 bg-white p-8 rounded-xl text-center border border-gray-100">{t("mother.noDocs")}</p> : (
                                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {documents.map(doc => (
                                         <Card key={doc.id} className="p-4 flex items-center gap-4 bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer group">
@@ -445,3 +448,4 @@ function SparklesIcon() {
         </svg>
     )
 }
+

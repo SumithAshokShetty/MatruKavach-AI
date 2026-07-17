@@ -64,3 +64,8 @@ This document tracks all implemented product features and the underlying technol
 ### 6. Core Communication Infrastructure
 * **Bidirectional Live Chat Window:** Multi-role chat UI that retrieves historical logs, supports text inputs, and displays real-time incoming messages using Socket.io WebSocket events ([ChatWindow.tsx](file:///c:/Users/user/OneDrive/Desktop/MatruKavach%20AI/frontend/components/ChatWindow.tsx)).
 * **Priority Color-Coded Toasts:** Renders visual highlights (RED glow/yellow/green alerts) in chat boxes and desktop notification popups depending on the urgency level of inbound patient messages ([ChatWindow.tsx](file:///c:/Users/user/OneDrive/Desktop/MatruKavach%20AI/frontend/components/ChatWindow.tsx#L133-L137), [LiveAlerts.tsx](file:///c:/Users/user/OneDrive/Desktop/MatruKavach%20AI/frontend/components/LiveAlerts.tsx#L70-L78)).
+
+### 7. Multi-Language Portal Localization
+* **Dynamic Client-Side Localization Context:** Exposes translations and selected language state across all app routing pages to support 7 major languages—English, Hindi, Marathi, Kannada, Telugu, Tamil, Bengali—persisting preferences in browser `localStorage` ([LanguageContext.tsx](file:///c:/Users/user/OneDrive/Desktop/MatruKavach%20AI/frontend/components/LanguageContext.tsx)).
+* **Integrated Language Selector UI:** Provides a custom-styled, interactive globe dropdown menu in both desktop and mobile layouts for real-time localization of headers, footers, dashboard widgets, forms, history logs, and care plans ([Header.tsx](file:///c:/Users/user/OneDrive/Desktop/MatruKavach%20AI/frontend/components/layout/Header.tsx)).
+
