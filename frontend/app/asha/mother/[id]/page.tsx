@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ChatWindow } from "@/components/ChatWindow";
 import { API_BASE_URL } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageContext";
+import { PatientQRCode } from "@/components/PatientQRCode";
 
 export default function MotherDetailPage() {
     const params = useParams();
@@ -142,6 +143,10 @@ export default function MotherDetailPage() {
                         </div>
                         <Button className="w-full mt-6">{t("mother.updateProfile")}</Button>
                     </Card>
+
+                    {mother && (
+                        <PatientQRCode motherId={motherId} patientName={mother.name} />
+                    )}
                 </div>
 
                 <div className="lg:col-span-2 overflow-hidden">

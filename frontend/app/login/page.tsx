@@ -44,9 +44,14 @@ export default function LoginPage() {
                 const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/me`, {
                     headers: { Authorization: `Bearer ${storedToken}` }
                 });
+                const searchParams = new URLSearchParams(window.location.search);
+                const redirectUrl = searchParams.get("redirect");
+                
                 if (meRes.ok) {
                     const profile = await meRes.json();
-                    if (profile.role === "admin") {
+                    if (redirectUrl) {
+                        router.push(redirectUrl);
+                    } else if (profile.role === "admin") {
                         router.push("/admin");
                     } else if (profile.role === "doctor") {
                         router.push("/doctor");
@@ -56,10 +61,12 @@ export default function LoginPage() {
                         router.push("/");
                     }
                 } else {
-                    router.push("/");
+                    router.push(redirectUrl || "/");
                 }
             } catch (err) {
-                router.push("/");
+                const searchParams = new URLSearchParams(window.location.search);
+                const redirectUrl = searchParams.get("redirect");
+                router.push(redirectUrl || "/");
             }
         } else {
             setError(res.error || "Invalid credentials. Please verify your username and password.");

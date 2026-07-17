@@ -9,6 +9,7 @@ import { MapPin, Calendar, Clock, Activity, FileText, Pill, FileUp, Apple, Clipb
 import { ChatWindow } from "@/components/ChatWindow";
 import { API_BASE_URL } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageContext";
+import { PatientQRCode } from "@/components/PatientQRCode";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 export default function DoctorPatientDetail() {
@@ -202,7 +203,8 @@ export default function DoctorPatientDetail() {
                     ))}
                 </div>
 
-                <div className="space-y-8">
+                <div className="grid lg:grid-cols-3 gap-8 items-start">
+                    <div className="lg:col-span-2 space-y-8">
 
                     {activeTab === "consultations" && (
                         <div>
@@ -514,6 +516,12 @@ export default function DoctorPatientDetail() {
                             </div>
                         </div>
                     )}
+                    </div>
+                    <div className="lg:col-span-1">
+                        {mother && (
+                            <PatientQRCode motherId={mother.id} patientName={mother.name} />
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
