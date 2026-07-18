@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { MapPin, User, MessageCircle, FileText, Activity, Plus, Trash2 } from "lucide-react";
+import { MapPin, User, MessageCircle, FileText, Activity, Plus, Trash2, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ChatWindow } from "@/components/ChatWindow";
@@ -23,6 +23,7 @@ export default function MotherDetailPage() {
     const [documents, setDocuments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [syncing, setSyncing] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -45,6 +46,30 @@ export default function MotherDetailPage() {
         }
         fetchData();
     }, [motherId]);
+
+    const handleEHRSync = async () => {
+        setSyncing(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/ehr/sync/${motherId}`, {
+                method: "POST"
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert(`EHR Sync successful!\nSynced Hemoglobin: ${data.synced_data.historical_hb} g/dL\nSynced BP: ${data.synced_data.historical_bp} mmHg`);
+                
+                // Refresh mother profile
+                const motherRes = await fetch(`${API_BASE_URL}/mother/${motherId}`);
+                if (motherRes.ok) setMother(await motherRes.json());
+            } else {
+                alert("EHR Synchronization failed");
+            }
+        } catch (err) {
+            console.error("EHR Sync failed", err);
+            alert("Error connecting to EHR Gateway");
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -104,6 +129,16 @@ export default function MotherDetailPage() {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full md:w-auto">
+                        <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={handleEHRSync} 
+                            disabled={syncing}
+                            className="w-full sm:w-auto justify-center bg-gray-100 text-gray-900 hover:bg-gray-200"
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} /> 
+                            {syncing ? "Syncing..." : "Sync EHR Vitals"}
+                        </Button>
                         <Link href={`/asha/assess?motherId=${motherId}`} className="w-full sm:w-auto">
                             <Button size="sm" className="w-full justify-center">
                                 <Plus className="w-4 h-4 mr-2" /> {t("asha.newAssessment")}
@@ -133,8 +168,12 @@ export default function MotherDetailPage() {
                                 <span className="font-medium">{mother.gestational_age_weeks} {t("common.weeks")}</span>
                             </div>
                             <div className="flex justify-between border-b pb-2">
-                                <span className="text-gray-500">{t("mother.gravida")}</span>
-                                <span className="font-medium">1</span>
+                                <span className="text-gray-500">EHR Baseline Hb</span>
+                                <span className="font-medium text-accent">{mother.historical_hb ? `${mother.historical_hb} g/dL` : "Not Synced"}</span>
+                            </div>
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="text-gray-500">EHR Baseline BP</span>
+                                <span className="font-medium text-accent">{mother.historical_bp ? `${mother.historical_bp} mmHg` : "Not Synced"}</span>
                             </div>
                             <div className="flex justify-between pb-2">
                                 <span className="text-gray-500">{t("mother.lastAssessment")}</span>

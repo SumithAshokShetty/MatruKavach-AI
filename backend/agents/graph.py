@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict, Any, Annotated
+from typing import TypedDict, List, Dict, Any, Annotated, Optional
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
@@ -24,6 +24,9 @@ class GraphState(TypedDict):
     name: str
     clinical_vitals: ClinicalVitals
     planetary_intelligence: PlanetaryIntelligence
+    
+    historical_hb: Optional[float]
+    historical_bp: Optional[str]
     
     messages: Annotated[List[BaseMessage], add_messages]
     
@@ -166,14 +169,24 @@ def evaluate_risk_node(state: GraphState) -> Dict:
         llm = get_llm_model(structured=True)
         
         prompt = f"""
-        You are an expert AI Clinical Advisor evaluating maternal health risk based on the vitals and local environment parameters.
-        Review the vitals, tools execution logs, and history:
+        You are an expert AI Clinical Advisor evaluating maternal health risk based on the vitals, local environment parameters, and historical EHR baselines.
+        Review the vitals, tools execution logs, history, and EHR baselines:
         {state["messages"]}
+        
+        Historical EHR Baselines:
+        - Historical Hemoglobin: {state.get('historical_hb')} g/dL
+        - Historical Blood Pressure: {state.get('historical_bp')} mmHg
+        
+        Current Vitals:
+        - Hemoglobin: {state['clinical_vitals'].hemoglobin} g/dL
+        - Blood Pressure: {state['clinical_vitals'].systolic_bp}/{state['clinical_vitals'].diastolic_bp} mmHg
+        
+        CRITICAL TASK: Cross-reference current vitals against the historical EHR baselines. If hemoglobin has dropped significantly (e.g. >= 1.5 g/dL drop) or blood pressure has risen significantly (e.g. >= 20 mmHg increase in systolic or >= 15 mmHg increase in diastolic) compared to the historical baseline, you MUST flag this deteriorating maternal health trend in the clinical justification and increase the risk score accordingly.
         
         Provide the structured output matching the GuidanceOutput schema:
         - clinical_risk_score: A float from 1.0 to 10.0 based on BP, Hemoglobin, Glucose, and Environmental compounding.
         - risk_level: LOW, MODERATE, HIGH, or CRITICAL.
-        - clinical_justification: Explaining the risk score citing exact temp/AQI.
+        - clinical_justification: Explaining the risk score citing exact temp/AQI and detailing any deteriorating maternal health trends.
         - clinical_dietary_plan: List of dietary actions.
         - environmental_safety_protocols: List of safety recommendations.
         - medication_monitoring: List of monitoring actions.
@@ -229,6 +242,36 @@ def evaluate_risk_node(state: GraphState) -> Dict:
             except Exception:
                 pass
 
+        # Cross-reference historical trends for fallback
+        h_hb = state.get("historical_hb")
+        h_bp = state.get("historical_bp")
+        current_hb = vitals.hemoglobin
+        current_sbp = vitals.systolic_bp
+        current_dbp = vitals.diastolic_bp
+        
+        trend_flags = []
+        justification_parts = []
+        if h_hb is not None and (h_hb - current_hb) >= 1.5:
+            clinical_score += 2.0
+            flag_msg = f"Deteriorating Trend: Hb dropped from {h_hb} to {current_hb} g/dL"
+            trend_flags.append(flag_msg)
+            justification_parts.append(flag_msg)
+            
+        if h_bp:
+            try:
+                parts = h_bp.split("/")
+                h_sbp = int(parts[0])
+                h_dbp = int(parts[1]) if len(parts) > 1 else 80
+                if (current_sbp - h_sbp) >= 20 or (current_dbp - h_dbp) >= 15:
+                    clinical_score += 2.0
+                    flag_msg = f"Deteriorating Trend: BP rose from {h_bp} to {current_sbp}/{current_dbp} mmHg"
+                    trend_flags.append(flag_msg)
+                    justification_parts.append(flag_msg)
+            except Exception:
+                pass
+        
+        clinical_flags.extend(trend_flags)
+
         base_score = clinical_score
         multiplier = 1.0
         for flag in environmental_flags:
@@ -242,13 +285,17 @@ def evaluate_risk_node(state: GraphState) -> Dict:
         if final_score >= 7.0: risk_level = "HIGH"
         if final_score >= 9.0: risk_level = "CRITICAL"
         
+        fallback_justification = "System fallback activated. Vitals analyzed using local clinical rules."
+        if justification_parts:
+            fallback_justification += " Deteriorating maternal trends detected: " + "; ".join(justification_parts) + "."
+        
         return {
             "clinical_score": clinical_score,
             "clinical_flags": clinical_flags,
             "environmental_flags": environmental_flags,
             "final_risk_score": final_score,
             "risk_level": risk_level,
-            "clinical_justification": "System fallback activated. Vitals analyzed using local clinical rules.",
+            "clinical_justification": fallback_justification,
             "nutrition_advice": {
                 "Fallback Guidance": [
                     "Maintain a balanced diet with plenty of seasonal vegetables and fruits.",

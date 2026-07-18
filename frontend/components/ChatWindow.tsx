@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Send, User, Mic, PlayCircle, Trash2, Edit2, Check, X } from "lucide-react";
+import { Send, User, Mic, PlayCircle, Trash2, Edit2, Check, X, Trash } from "lucide-react";
 import { API_BASE_URL, socket } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageContext";
 
@@ -28,6 +28,7 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
     const [translationsCache, setTranslationsCache] = useState<Record<string, string>>({});
+    const [inFlightTranslates, setInFlightTranslates] = useState<Record<string, boolean>>({});
     
     // Message editing states
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -86,6 +87,7 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
                     priority: data.priority || "GREEN"
                 };
                 setMessages(prev => {
+                    // Deduplicate messages with same ID to prevent duplicates
                     if (prev.some(m => m.id === newMsg.id)) return prev;
                     return [...prev, newMsg];
                 });
@@ -107,6 +109,12 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
             }
         });
 
+        socket.on("message_deleted", (data: any) => {
+            if (data.mother_id === motherId) {
+                setMessages(prev => prev.filter(m => m.id !== String(data.id)));
+            }
+        });
+
         socket.on("chat_cleared", (data: any) => {
             if (data.mother_id === motherId) {
                 setMessages([]);
@@ -116,6 +124,7 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
         return () => {
             socket.off("new_notification");
             socket.off("message_updated");
+            socket.off("message_deleted");
             socket.off("chat_cleared");
         };
     }, [motherId, language]);
@@ -131,8 +140,9 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
 
         messages.forEach(async (msg) => {
             const cacheKey = `${msg.id}_${language}`;
-            if (translationsCache[cacheKey]) return;
+            if (translationsCache[cacheKey] || inFlightTranslates[cacheKey]) return;
 
+            setInFlightTranslates(prev => ({ ...prev, [cacheKey]: true }));
             try {
                 const res = await fetch(`${API_BASE_URL}/translate`, {
                     method: "POST",
@@ -151,11 +161,13 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
                 }
             } catch (err) {
                 console.error("Failed to translate message on client:", err);
+            } finally {
+                setInFlightTranslates(prev => ({ ...prev, [cacheKey]: false }));
             }
         });
     }, [messages, language]);
 
-    // Send Text Message
+    // Send Text Message (No manual append; Socket.IO resolves the addition)
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
@@ -172,14 +184,6 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
             });
 
             if (res.ok) {
-                const data = await res.json();
-                const sentMsg: ChatMessage = {
-                    id: "temp_" + Date.now(),
-                    sender: senderRole,
-                    content: newMessage,
-                    timestamp: new Date().toISOString()
-                };
-                setMessages(prev => [...prev, sentMsg]);
                 setNewMessage("");
             }
         } catch (err) {
@@ -212,6 +216,20 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
         }
     };
 
+    // Delete Single Message
+    const handleDeleteMessage = async (msgId: string) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/mother/${motherId}/chat/${msgId}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                setMessages(prev => prev.filter(m => m.id !== msgId));
+            }
+        } catch (err) {
+            console.error("Failed to delete message:", err);
+        }
+    };
+
     // Purge Chat Logs
     const handleDeleteChat = async () => {
         try {
@@ -226,7 +244,7 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
         }
     };
 
-    // Audio Voice Recording Handler (Send voice reply to patient)
+    // Audio Voice Recording Handler (Send voice reply to patient - no manual append; Socket.IO resolves addition)
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -245,20 +263,10 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
 
                 setSending(true);
                 try {
-                    const res = await fetch(`${API_BASE_URL}/mother/${motherId}/reply-voice`, {
+                    await fetch(`${API_BASE_URL}/mother/${motherId}/reply-voice`, {
                         method: "POST",
                         body: formData
                     });
-                    if (res.ok) {
-                        const data = await res.json();
-                        const voiceMsg: ChatMessage = {
-                            id: "voice_" + Date.now(),
-                            sender: senderRole,
-                            content: data.content || "Voice reply",
-                            timestamp: new Date().toISOString()
-                        };
-                        setMessages(prev => [...prev, voiceMsg]);
-                    }
                 } catch (err) {
                     console.error("Failed to upload voice reply:", err);
                 } finally {
@@ -349,18 +357,34 @@ export function ChatWindow({ motherId }: ChatWindowProps) {
                                             </button>
                                         </div>
                                     ) : (
-                                        <p className="whitespace-pre-wrap">{displayContent}</p>
+                                        <div>
+                                            <p className="whitespace-pre-wrap">{displayContent}</p>
+                                            {language !== "en" && !translationsCache[`${msg.id}_${language}`] && (
+                                                <div className="text-[10px] italic opacity-65 flex items-center gap-1 mt-1 animate-pulse">
+                                                    ⏳ Translating...
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
 
-                                    {/* Action button trigger edit for outgoing portal messages */}
+                                    {/* Action buttons (Edit & Delete) for outgoing portal messages */}
                                     {isMe && !isEditing && (
-                                        <button
-                                            onClick={() => handleStartEdit(msg)}
-                                            className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
-                                            title="Edit Message"
-                                        >
-                                            <Edit2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        <div className="absolute -left-12 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => handleStartEdit(msg)}
+                                                className="text-gray-400 hover:text-gray-600"
+                                                title="Edit Message"
+                                            >
+                                                <Edit2 className="w-3 h-3" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteMessage(msg.id)}
+                                                className="text-gray-400 hover:text-red-500"
+                                                title="Delete Message"
+                                            >
+                                                <Trash className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     )}
 
                                     {msg.sender === "Patient" && msg.original_content && msg.original_content !== displayContent && (

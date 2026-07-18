@@ -20,7 +20,7 @@ from fastapi import File, UploadFile, Form
 from datetime import datetime, timedelta
 
 from socket_instance import sio
-from routers import telegram_bot, auth as auth_router, voice as voice_router, share as share_router, queue_engine as queue_engine_router
+from routers import telegram_bot, auth as auth_router, voice as voice_router, share as share_router, queue_engine as queue_engine_router, ehr_sync
 
 create_db_and_tables()
 
@@ -33,6 +33,7 @@ app.include_router(auth_router.router)
 app.include_router(voice_router.router)
 app.include_router(share_router.router)
 app.include_router(queue_engine_router.router)
+app.include_router(ehr_sync.router)
 
 # Read CORS origins from environment variable, fallback to localhost:3000
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
@@ -110,7 +111,9 @@ async def assess_risk(vitals: VitalsInput, session: SessionDep):
         temperature_c=vitals.temperature_c,
         heat_index=vitals.heat_index,
         aqi=vitals.aqi,
-        toxins=vitals.chemical_exposure
+        toxins=vitals.chemical_exposure,
+        historical_hb=mother.historical_hb,
+        historical_bp=mother.historical_bp
     )
 
     assessment_data = AssessmentData(
@@ -136,6 +139,8 @@ async def assess_risk(vitals: VitalsInput, session: SessionDep):
         environmental_flags=json.dumps(result.environmental_flags),
         nutrition_advice=json.dumps(result.nutrition_advice),
         medication_reminders=json.dumps(result.medication_reminders),
+        clinical_justification=result.clinical_justification,
+        environmental_impact=result.environmental_impact,
         timestamp=result.timestamp
     )
     session.add(result_db)

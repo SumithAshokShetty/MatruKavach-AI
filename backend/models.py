@@ -28,6 +28,9 @@ class MotherProfile(SQLModel, table=True):
     latitude: float
     longitude: float
 
+    historical_hb: Optional[float] = Field(default=None)
+    historical_bp: Optional[str] = Field(default=None)
+
     assigned_doctor_id: Optional[str] = Field(default=None, foreign_key="doctor.id")
     assigned_asha_id: Optional[str] = Field(default=None, foreign_key="ashaworker.id")
 

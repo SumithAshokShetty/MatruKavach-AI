@@ -13,7 +13,8 @@ class MatruKavachOrchestrator:
                             bp_sys: int, bp_dia: int, weight: float, 
                             hb: float, glucose: int, gest_weeks: int,
                             extra_symptoms: str = None, temperature_c: float = 30.0,
-                            heat_index: float = 30.0, aqi: float = 50.0, toxins: float = 2.0):
+                            heat_index: float = 30.0, aqi: float = 50.0, toxins: float = 2.0,
+                            historical_hb: float = None, historical_bp: str = None):
         
         from .graph import matrukavach_graph, ClinicalVitals, PlanetaryIntelligence
         from langchain_core.messages import HumanMessage
@@ -43,7 +44,9 @@ class MatruKavachOrchestrator:
             ],
             "escalation_status": "NORMAL",
             "doctor_approval": False,
-            "doctor_override_notes": ""
+            "doctor_override_notes": "",
+            "historical_hb": historical_hb,
+            "historical_bp": historical_bp
         }
 
         # Clear existing checkpointer checkpoints on this thread to force a fresh START run

@@ -21,3 +21,4 @@ pymongo
 passlib[bcrypt]
 pyjwt
 langchain-groq
+redis==5.0.1

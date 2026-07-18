@@ -16,7 +16,7 @@ export default function DoctorPatientDetail() {
     const params = useParams();
     const router = useRouter();
     const motherId = params.mother_id as string;
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
 
     const [mother, setMother] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);
@@ -26,7 +26,15 @@ export default function DoctorPatientDetail() {
     const [activeTab, setActiveTab] = useState("consultations");
 
     const [chatSummary, setChatSummary] = useState<string | null>(null);
+    const [translatedSummary, setTranslatedSummary] = useState<string | null>(null);
     const [generatingSummary, setGeneratingSummary] = useState(false);
+    const [summaryCardTexts, setSummaryCardTexts] = useState({
+        title: "AI Medical Summary",
+        desc: "Generate a structured clinical summary of the patient's conversations over the past two weeks to quickly catch up on reported symptoms or emergencies.",
+        btnNormal: "Generate AI Summary",
+        btnLoading: "Analyzing Chat Logs...",
+        statusReady: "Summary Ready"
+    });
 
     const [isConsulting, setIsConsulting] = useState(false);
     const [isVoiceMode, setIsVoiceMode] = useState(false);
@@ -79,8 +87,103 @@ export default function DoctorPatientDetail() {
             });
     }, [motherId]);
 
+    // Translate AI Medical Summary Card static labels dynamically based on selected portal locale
+    useEffect(() => {
+        if (language === "en") {
+            setSummaryCardTexts({
+                title: "AI Medical Summary",
+                desc: "Generate a structured clinical summary of the patient's conversations over the past two weeks to quickly catch up on reported symptoms or emergencies.",
+                btnNormal: "Generate AI Summary",
+                btnLoading: "Analyzing Chat Logs...",
+                statusReady: "Summary Ready"
+            });
+            return;
+        }
+
+        const translateTexts = async () => {
+            try {
+                // Translate heading
+                const tTitle = await fetch(`${API_BASE_URL}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: "AI Medical Summary", target_lang: language })
+                }).then(r => r.json()).then(d => d.translated_text);
+
+                // Translate desc
+                const tDesc = await fetch(`${API_BASE_URL}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: "Generate a structured clinical summary of the patient's conversations over the past two weeks to quickly catch up on reported symptoms or emergencies.", target_lang: language })
+                }).then(r => r.json()).then(d => d.translated_text);
+
+                // Translate button normal
+                const tBtnNormal = await fetch(`${API_BASE_URL}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: "Generate AI Summary", target_lang: language })
+                }).then(r => r.json()).then(d => d.translated_text);
+
+                // Translate button loading
+                const tBtnLoading = await fetch(`${API_BASE_URL}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: "Analyzing Chat Logs...", target_lang: language })
+                }).then(r => r.json()).then(d => d.translated_text);
+
+                // Translate status ready
+                const tStatusReady = await fetch(`${API_BASE_URL}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: "Summary Ready", target_lang: language })
+                }).then(r => r.json()).then(d => d.translated_text);
+
+                setSummaryCardTexts({
+                    title: tTitle || "AI Medical Summary",
+                    desc: tDesc || "Generate a structured clinical summary...",
+                    btnNormal: tBtnNormal || "Generate AI Summary",
+                    btnLoading: tBtnLoading || "Analyzing Chat Logs...",
+                    statusReady: tStatusReady || "Summary Ready"
+                });
+            } catch (err) {
+                console.error("Failed to translate summary card texts:", err);
+            }
+        };
+
+        translateTexts();
+    }, [language]);
+
+    // Translate dynamic AI medical summary results when generated or when language updates
+    useEffect(() => {
+        if (!chatSummary || language === "en") {
+            setTranslatedSummary(null);
+            return;
+        }
+
+        const translateSummary = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        text: chatSummary,
+                        target_lang: language
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTranslatedSummary(data.translated_text);
+                }
+            } catch (err) {
+                console.error("Failed to translate summary content:", err);
+            }
+        };
+
+        translateSummary();
+    }, [chatSummary, language]);
+
     const handleGenerateSummary = async () => {
         setGeneratingSummary(true);
+        setTranslatedSummary(null);
         try {
             const res = await fetch(`${API_BASE_URL}/mother/${motherId}/chat/summary`);
             if (res.ok) {
@@ -489,10 +592,10 @@ export default function DoctorPatientDetail() {
                             <div className="lg:col-span-1">
                                 <Card className="p-6 bg-white/50 backdrop-blur-md sticky top-6 border border-gray-200">
                                     <h3 className="font-heading font-medium text-lg mb-2 flex items-center gap-2">
-                                        <SparklesIcon /> AI Medical Summary
+                                        <SparklesIcon /> {summaryCardTexts.title}
                                     </h3>
                                     <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                                        Generate a structured clinical summary of the patient's conversations over the past two weeks to quickly catch up on reported symptoms or emergencies.
+                                        {summaryCardTexts.desc}
                                     </p>
 
                                     <button
@@ -501,15 +604,19 @@ export default function DoctorPatientDetail() {
                                         className="w-full mb-6 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-3 rounded-xl border border-indigo-200 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                                     >
                                         {generatingSummary ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
-                                        {generatingSummary ? "Analyzing Chat Logs..." : "Generate AI Summary"}
+                                        {generatingSummary ? summaryCardTexts.btnLoading : summaryCardTexts.btnNormal}
                                     </button>
 
                                     {chatSummary && (
                                         <div className="mt-4 p-5 bg-white rounded-xl border border-indigo-100 shadow-[0_4px_20px_rgba(99,102,241,0.05)] text-sm text-gray-800 leading-relaxed font-medium">
                                             <div className="flex items-center gap-2 mb-3 text-indigo-600 font-bold uppercase tracking-wider text-xs">
-                                                <CheckCircle2 className="w-4 h-4" /> Summary Ready
+                                                <CheckCircle2 className="w-4 h-4" /> {summaryCardTexts.statusReady}
                                             </div>
-                                            {chatSummary}
+                                            {language === "en" ? chatSummary : (translatedSummary || (
+                                                <span className="text-[10px] italic opacity-60 flex items-center gap-1 mt-1 animate-pulse">
+                                                    ⏳ Translating...
+                                                </span>
+                                            ))}
                                         </div>
                                     )}
                                 </Card>

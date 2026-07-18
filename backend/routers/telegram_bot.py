@@ -26,7 +26,15 @@ def get_telegram_bot_token():
 def get_telegram_api_url():
     return f"https://api.telegram.org/bot{get_telegram_bot_token()}"
 
-def get_gemini_model():
+_working_gemini_model = None
+_active_key = None
+_failed_keys = set()
+
+def get_gemini_model(force_refresh=False):
+    global _working_gemini_model, _active_key, _failed_keys
+    if _working_gemini_model and not force_refresh:
+        return _working_gemini_model
+
     raw_key = os.getenv("GOOGLE_API_KEY", "")
     if not raw_key:
         from dotenv import load_dotenv
@@ -34,13 +42,22 @@ def get_gemini_model():
         load_dotenv("../.env")
         raw_key = os.getenv("GOOGLE_API_KEY", "")
     if raw_key:
-        # Resolve comma-separated multiple keys fallback
-        key = raw_key.split(",")[0].strip()
-        try:
-            genai.configure(api_key=key)
-            return genai.GenerativeModel('gemini-2.5-flash')
-        except Exception as e:
-            print(f"Failed to configure Gemini: {e}")
+        keys = [k.strip() for k in raw_key.split(",") if k.strip()]
+        for key in keys:
+            if key in _failed_keys:
+                continue
+            try:
+                genai.configure(api_key=key)
+                test_model = genai.GenerativeModel('gemini-2.5-flash')
+                test_model.generate_content("Hi", generation_config={"max_output_tokens": 5})
+                _working_gemini_model = test_model
+                _active_key = key
+                return _working_gemini_model
+            except Exception as e:
+                print(f"Gemini key {key[:10]}... validation failed: {e}")
+                _failed_keys.add(key)
+    if _failed_keys:
+        _failed_keys.clear()
     return None
 
 model = get_gemini_model()
@@ -107,22 +124,62 @@ async def process_voice_note(file_id: str) -> str:
             
     return "Maternity details recorded. Feeling minor headache and fatigue today."
 
+def translate_via_groq(text: str, prompt: str) -> str:
+    groq_key = os.getenv("GROQ_API_KEY", "")
+    if not groq_key:
+        from dotenv import load_dotenv
+        load_dotenv()
+        load_dotenv("../.env")
+        groq_key = os.getenv("GROQ_API_KEY", "")
+    if not groq_key:
+        return None
+    try:
+        headers = {
+            "Authorization": f"Bearer {groq_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "openai/gpt-oss-120b",
+            "messages": [
+                {"role": "user", "content": f"{prompt}\n\n{text}"}
+            ],
+            "temperature": 0.1
+        }
+        res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=5)
+        if res.status_code == 200:
+            return res.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        print(f"Groq translation API error: {e}")
+    return None
+
 def translate_to_english(text: str) -> str:
-    global model
-    if not model:
-        model = get_gemini_model()
-    if model:
-        try:
-            response = model.generate_content(f"Translate the following patient message to English. ONLY output the translated text:\n\n{text}")
-            return response.text.strip()
-        except Exception as e:
-            print(f"Gemini Translation error: {e}")
-    return f"{text} (Translated to English)"
+    global model, _active_key, _failed_keys, _working_gemini_model
+    # 1. Try Gemini rotation
+    for attempt in range(3):
+        if not model:
+            model = get_gemini_model()
+        if model:
+            try:
+                response = model.generate_content(f"Translate the following patient message to English. ONLY output the translated text:\n\n{text}")
+                return response.text.strip()
+            except Exception as e:
+                print(f"Gemini Translation to English error on attempt {attempt}: {e}")
+                if _active_key:
+                    _failed_keys.add(_active_key)
+                _working_gemini_model = None
+                model = None
+                
+    # 2. Try Groq fallback
+    prompt = "Translate the following patient message to English. ONLY output the translated text:"
+    groq_translated = translate_via_groq(text, prompt)
+    if groq_translated:
+        print("💡 Successfully translated via Groq fallback.")
+        return groq_translated
+        
+    return text
 
 def translate_from_english(text: str, target_lang: str) -> str:
-    global model
-    if not model:
-        model = get_gemini_model()
+    global model, _active_key, _failed_keys, _working_gemini_model
     lang_map = {
         "en": "English", 
         "hi": "Hindi", 
@@ -135,25 +192,29 @@ def translate_from_english(text: str, target_lang: str) -> str:
     target = lang_map.get(target_lang, "English")
     if target == "English":
         return text
-    if model:
-        try:
-            response = model.generate_content(f"Translate the following message to {target}. Keep it conversational and natural. ONLY output the translated text:\n\n{text}")
-            return response.text.strip()
-        except Exception as e:
-            print(f"Gemini Translation error: {e}")
-    
-    if target_lang == "hi":
-        return f"{text} (Translated to Hindi)"
-    elif target_lang == "mr":
-        return f"{text} (Translated to Marathi)"
-    elif target_lang == "kn":
-        return f"{text} (Translated to Kannada)"
-    elif target_lang == "te":
-        return f"{text} (Translated to Telugu)"
-    elif target_lang == "ta":
-        return f"{text} (Translated to Tamil)"
-    elif target_lang == "bn":
-        return f"{text} (Translated to Bengali)"
+
+    # 1. Try Gemini rotation
+    for attempt in range(3):
+        if not model:
+            model = get_gemini_model()
+        if model:
+            try:
+                response = model.generate_content(f"Translate the following message to {target}. Keep it conversational and natural. ONLY output the translated text:\n\n{text}")
+                return response.text.strip()
+            except Exception as e:
+                print(f"Gemini Translation from English error on attempt {attempt}: {e}")
+                if _active_key:
+                    _failed_keys.add(_active_key)
+                _working_gemini_model = None
+                model = None
+
+    # 2. Try Groq fallback
+    prompt = f"Translate the following message to {target}. Keep it conversational and natural. ONLY output the translated text:"
+    groq_translated = translate_via_groq(text, prompt)
+    if groq_translated:
+        print(f"💡 Successfully translated to {target} via Groq fallback.")
+        return groq_translated
+
     return text
 
 class TranslateRequest(BaseModel):
@@ -388,6 +449,25 @@ async def delete_chat_history(mother_id: str, session: Session = Depends(get_ses
     await sio.emit("chat_cleared", {"mother_id": mother_id})
     return {"status": "success", "message": "Chat history purged successfully."}
 
+@router.delete("/mother/{mother_id}/chat/{message_id}")
+async def delete_single_message(mother_id: str, message_id: int, session: Session = Depends(get_session)):
+    """
+    Deletes a single chat message.
+    """
+    msg = session.get(ChatMessage, message_id)
+    if not msg or msg.mother_id != mother_id:
+        raise HTTPException(status_code=404, detail="Message not found")
+        
+    session.delete(msg)
+    session.commit()
+    
+    await sio.emit("message_deleted", {
+        "id": str(message_id),
+        "mother_id": mother_id
+    })
+    return {"status": "success", "message": "Message deleted successfully."}
+
+
 @router.put("/mother/{mother_id}/chat/{message_id}")
 async def edit_chat_message(mother_id: str, message_id: int, request: Request, session: Session = Depends(get_session)):
     """
@@ -477,13 +557,20 @@ async def send_voice_reply(
     session.commit()
     session.refresh(reply_entry)
     
-    # Send actual audio voice file to Telegram
+    # Send actual audio voice file to Telegram (without caption to avoid narrow wrapping)
     try:
         files = {"voice": ("reply.ogg", audio_bytes, "audio/ogg")}
         requests.post(
             f"https://api.telegram.org/bot{get_telegram_bot_token()}/sendVoice",
-            data={"chat_id": mother.telegram_id, "caption": f"💡 Voice reply transcribed: {translated_text}"},
+            data={"chat_id": mother.telegram_id},
             files=files
+        )
+        
+        # Send transcript as a separate full-width text message
+        sender_prefix = "🩺 Doctor: " if sender == "Doctor" else "👩‍⚕️ ASHA Worker: "
+        send_telegram_message(
+            mother.telegram_id, 
+            f"{sender_prefix}💡 Voice reply transcribed:\n{translated_text}"
         )
     except Exception as e:
         print(f"Error sending voice file to Telegram: {e}")
