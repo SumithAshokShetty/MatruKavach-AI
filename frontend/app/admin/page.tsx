@@ -10,7 +10,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { API_BASE_URL } from "@/lib/api";
 
 export default function AdminDashboard() {
-    const { t } = useLanguage();
+    const { t, tDynamic } = useLanguage();
     const [activeTab, setActiveTab] = useState("overview");
     const [stats, setStats] = useState<any>(null);
     const [mothers, setMothers] = useState<any[]>([]);
@@ -68,10 +68,10 @@ export default function AdminDashboard() {
     if (loading && !stats) return <div className="min-h-screen flex items-center justify-center font-body text-gray-500">{t("common.loading")}</div>;
 
     const tabs = [
-        { id: "overview", label: "Overview" },
-        { id: "doctors", label: t("nav.doctorPortal").replace(" Portal", "s") },
-        { id: "ashas", label: t("nav.ashaPortal").replace(" Portal", " Workers") },
-        { id: "mothers", label: "Mothers" }
+        { id: "overview", label: tDynamic("Overview") },
+        { id: "doctors", label: tDynamic("Doctors") },
+        { id: "ashas", label: tDynamic("ASHA Workers") },
+        { id: "mothers", label: tDynamic("Mothers") }
     ];
 
     return (
@@ -87,10 +87,10 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-4 mt-4 md:mt-0">
                         <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-xl font-bold flex items-center gap-2 border border-yellow-200">
-                            <AlertTriangle className="w-4 h-4" /> {t("doctor.clinicalAlerts").replace("Clinical Alerts", "Approvals")} (0)
+                            <AlertTriangle className="w-4 h-4" /> {tDynamic("Approvals")} ({tDynamic(0)})
                         </div>
                         <button onClick={fetchData} className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-colors">
-                            <RefreshCw className="w-4 h-4" /> {t("admin.agentStatus").replace("Status", "Refresh")}
+                            <RefreshCw className="w-4 h-4" /> {tDynamic("Refresh")}
                         </button>
                     </div>
                 </div>
@@ -98,19 +98,19 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <Card className="p-6 border-l-4 border-l-pink-500 shadow-sm">
                         <p className="text-sm font-bold text-gray-500 mb-1">{t("admin.totalMothers")}</p>
-                        <p className="text-4xl font-black text-gray-900">{stats?.total_mothers}</p>
+                        <p className="text-4xl font-black text-gray-900">{tDynamic(stats?.total_mothers)}</p>
                     </Card>
                     <Card className="p-6 border-l-4 border-l-indigo-500 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500 mb-1">{t("nav.doctorPortal").replace(" Portal", "s")}</p>
-                        <p className="text-4xl font-black text-gray-900">{stats?.total_doctors}</p>
+                        <p className="text-sm font-bold text-gray-500 mb-1">{tDynamic("Doctors")}</p>
+                        <p className="text-4xl font-black text-gray-900">{tDynamic(stats?.total_doctors)}</p>
                     </Card>
                     <Card className="p-6 border-l-4 border-l-purple-500 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500 mb-1">{t("nav.ashaPortal").replace(" Portal", " Workers")}</p>
-                        <p className="text-4xl font-black text-gray-900">{stats?.total_ashas}</p>
+                        <p className="text-sm font-bold text-gray-500 mb-1">{tDynamic("ASHA Workers")}</p>
+                        <p className="text-4xl font-black text-gray-900">{tDynamic(stats?.total_ashas)}</p>
                     </Card>
                     <Card className="p-6 border-l-4 border-l-green-500 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500 mb-1">Fully Assigned</p>
-                        <p className="text-4xl font-black text-gray-900">{stats?.fully_assigned}</p>
+                        <p className="text-sm font-bold text-gray-500 mb-1">{tDynamic("Fully Assigned")}</p>
+                        <p className="text-4xl font-black text-gray-900">{tDynamic(stats?.fully_assigned)}</p>
                     </Card>
                 </div>
 
@@ -134,41 +134,41 @@ export default function AdminDashboard() {
                     {activeTab === "overview" && (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
 
-                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-                                <Activity className="w-5 h-5 text-gray-400" /> System Overview
+                             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                                <Activity className="w-5 h-5 text-gray-400" /> {tDynamic("System Overview")}
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                                 <div className="bg-green-50 border border-green-200 p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                                    <p className="text-4xl font-black text-green-700">{stats?.fully_assigned}</p>
-                                    <p className="text-xs font-bold text-green-800 mt-2 uppercase tracking-wider">Fully Assigned</p>
+                                    <p className="text-4xl font-black text-green-700">{tDynamic(stats?.fully_assigned)}</p>
+                                    <p className="text-xs font-bold text-green-800 mt-2 uppercase tracking-wider">{tDynamic("Fully Assigned")}</p>
                                 </div>
                                 <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                                    <p className="text-4xl font-black text-yellow-700">{stats?.needs_assignment}</p>
-                                    <p className="text-xs font-bold text-yellow-800 mt-2 uppercase tracking-wider">Needs Assignment</p>
+                                    <p className="text-4xl font-black text-yellow-700">{tDynamic(stats?.needs_assignment)}</p>
+                                    <p className="text-xs font-bold text-yellow-800 mt-2 uppercase tracking-wider">{tDynamic("Needs Assignment")}</p>
                                 </div>
                                 <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                                    <p className="text-4xl font-black text-indigo-700">{stats?.total_doctors}</p>
-                                    <p className="text-xs font-bold text-indigo-800 mt-2 uppercase tracking-wider">{t("admin.agentStatus").replace("Status", "Active")} Doctors</p>
+                                    <p className="text-4xl font-black text-indigo-700">{tDynamic(stats?.total_doctors)}</p>
+                                    <p className="text-xs font-bold text-indigo-800 mt-2 uppercase tracking-wider">{tDynamic("Active")} {tDynamic("Doctors")}</p>
                                 </div>
                                 <div className="bg-purple-50 border border-purple-200 p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                                    <p className="text-4xl font-black text-purple-700">{stats?.total_ashas}</p>
-                                    <p className="text-xs font-bold text-purple-800 mt-2 uppercase tracking-wider">{t("admin.agentStatus").replace("Status", "Active")} ASHA Workers</p>
+                                    <p className="text-4xl font-black text-purple-700">{tDynamic(stats?.total_ashas)}</p>
+                                    <p className="text-xs font-bold text-purple-800 mt-2 uppercase tracking-wider">{tDynamic("Active")} {tDynamic("ASHA Workers")}</p>
                                 </div>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-8">
                                 <Card className="p-6 shadow-sm border border-gray-100">
                                     <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-6 flex items-center gap-2">
-                                        <Users className="w-4 h-4 text-indigo-500" /> Doctor Workload
+                                        <Users className="w-4 h-4 text-indigo-500" /> {tDynamic("Doctor Workload")}
                                     </h3>
                                     <div className="space-y-5">
                                         {stats?.doctor_workloads.map((doc: any, i: number) => (
                                             <div key={i} className="flex items-center gap-4">
-                                                <div className="w-32 text-sm font-medium text-gray-800 truncate">{doc.name}</div>
+                                                <div className="w-32 text-sm font-medium text-gray-800 truncate">{tDynamic(doc.name)}</div>
                                                 <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                                                     <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min((doc.count / 10) * 100, 100)}%` }} />
                                                 </div>
-                                                <div className="w-8 text-right text-sm font-black text-indigo-600">{doc.count}</div>
+                                                <div className="w-8 text-right text-sm font-black text-indigo-600">{tDynamic(doc.count)}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -176,16 +176,16 @@ export default function AdminDashboard() {
 
                                 <Card className="p-6 shadow-sm border border-gray-100">
                                     <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-6 flex items-center gap-2">
-                                        <UserPlus className="w-4 h-4 text-purple-500" /> ASHA Worker Workload
+                                        <UserPlus className="w-4 h-4 text-purple-500" /> {tDynamic("ASHA Worker Workload")}
                                     </h3>
                                     <div className="space-y-5">
                                         {stats?.asha_workloads.map((asha: any, i: number) => (
                                             <div key={i} className="flex items-center gap-4">
-                                                <div className="w-32 text-sm font-medium text-gray-800 truncate">{asha.name}</div>
+                                                <div className="w-32 text-sm font-medium text-gray-800 truncate">{tDynamic(asha.name)}</div>
                                                 <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                                                     <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min((asha.count / 10) * 100, 100)}%` }} />
                                                 </div>
-                                                <div className="w-8 text-right text-sm font-black text-purple-600">{asha.count}</div>
+                                                <div className="w-8 text-right text-sm font-black text-purple-600">{tDynamic(asha.count)}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                             <Card className="p-0 shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                                    <h2 className="text-lg font-bold text-gray-900">Manage Mothers ({mothers.length})</h2>
+                                    <h2 className="text-lg font-bold text-gray-900">{tDynamic("Manage Mothers")} ({tDynamic(mothers.length)})</h2>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
@@ -208,25 +208,25 @@ export default function AdminDashboard() {
                                                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t("admin.name")}</th>
                                                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t("common.phone")}</th>
                                                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t("common.location")}</th>
-                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">ASHA Worker</th>
-                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Doctor</th>
+                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{tDynamic("ASHA Worker")}</th>
+                                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{tDynamic("Doctor")}</th>
                                                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">{t("common.status")}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {mothers.map((m) => (
                                                 <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="p-4 text-sm font-bold text-gray-900">{m.name}</td>
-                                                    <td className="p-4 text-sm text-gray-500">{m.phone}</td>
-                                                    <td className="p-4 text-sm text-gray-500">{m.location || "N/A"}</td>
+                                                    <td className="p-4 text-sm font-bold text-gray-900">{tDynamic(m.name)}</td>
+                                                    <td className="p-4 text-sm text-gray-500">{tDynamic(m.phone)}</td>
+                                                    <td className="p-4 text-sm text-gray-500">{tDynamic(m.location || "N/A")}</td>
                                                     <td className="p-4">
                                                         <select
                                                             className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
                                                             value={m.assigned_asha_id || ""}
                                                             onChange={(e) => handleAssign(m.id, null, e.target.value)}
                                                         >
-                                                            <option value="" disabled>-- Select --</option>
-                                                            {ashas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                            <option value="" disabled>{tDynamic("-- Select --")}</option>
+                                                            {ashas.map(a => <option key={a.id} value={a.id}>{tDynamic(a.name)}</option>)}
                                                         </select>
                                                     </td>
                                                     <td className="p-4">
@@ -235,15 +235,15 @@ export default function AdminDashboard() {
                                                             value={m.assigned_doctor_id || ""}
                                                             onChange={(e) => handleAssign(m.id, e.target.value, null)}
                                                         >
-                                                            <option value="" disabled>-- Select --</option>
-                                                            {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                                            <option value="" disabled>{tDynamic("-- Select --")}</option>
+                                                            {doctors.map(d => <option key={d.id} value={d.id}>{tDynamic(d.name)}</option>)}
                                                         </select>
                                                     </td>
                                                     <td className="p-4 text-center">
                                                         {m.assigned_doctor_id && m.assigned_asha_id ? (
-                                                            <span className="text-green-500 flex items-center justify-center gap-1 text-xs font-bold uppercase"><CheckCircle2 className="w-4 h-4" /> OK</span>
+                                                            <span className="text-green-500 flex items-center justify-center gap-1 text-xs font-bold uppercase"><CheckCircle2 className="w-4 h-4" /> {tDynamic("OK")}</span>
                                                         ) : (
-                                                            <span className="text-yellow-500 flex items-center justify-center gap-1 text-xs font-bold uppercase"><AlertTriangle className="w-4 h-4" /> PEND</span>
+                                                            <span className="text-yellow-500 flex items-center justify-center gap-1 text-xs font-bold uppercase"><AlertTriangle className="w-4 h-4" /> {tDynamic("PEND")}</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
 
                     {activeTab === "ashas" && (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                            <h2 className="text-lg font-bold text-gray-900 mb-6">Manage ASHA Workers ({ashas.length})</h2>
+                            <h2 className="text-lg font-bold text-gray-900 mb-6">{tDynamic("Manage ASHA Workers")} ({tDynamic(ashas.length)})</h2>
                             <div className="space-y-4">
                                 {ashas.map((asha) => {
                                     const assignedCount = stats?.asha_workloads.find((a: any) => a.id === asha.id)?.count || 0;
@@ -266,13 +266,13 @@ export default function AdminDashboard() {
                                             <div className="flex items-center gap-4">
                                                 <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
                                                 <div>
-                                                    <p className="font-bold text-gray-900">{asha.name}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">{asha.location} • {asha.phone}</p>
+                                                    <p className="font-bold text-gray-900">{tDynamic(asha.name)}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{tDynamic(asha.location)} • {tDynamic(asha.phone)}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between w-full sm:w-auto gap-6 sm:gap-6 mt-2 sm:mt-0">
                                                 <div className="bg-purple-50 text-purple-700 px-4 py-1.5 rounded-full text-xs font-bold border border-purple-100">
-                                                    {assignedCount} mothers
+                                                    {tDynamic(assignedCount)} {tDynamic("mothers")}
                                                 </div>
                                                 <div className="flex gap-2 text-gray-400">
                                                     <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
 
                     {activeTab === "doctors" && (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                            <h2 className="text-lg font-bold text-gray-900 mb-6">Manage Doctors ({doctors.length})</h2>
+                            <h2 className="text-lg font-bold text-gray-900 mb-6">{tDynamic("Manage Doctors")} ({tDynamic(doctors.length)})</h2>
                             <div className="space-y-4">
                                 {doctors.map((doc) => {
                                     const assignedCount = stats?.doctor_workloads.find((d: any) => d.id === doc.id)?.count || 0;
@@ -297,13 +297,13 @@ export default function AdminDashboard() {
                                             <div className="flex items-center gap-4">
                                                 <div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                                                 <div>
-                                                    <p className="font-bold text-gray-900">{doc.name}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">{doc.specialization} • {doc.phone}</p>
+                                                    <p className="font-bold text-gray-900">{tDynamic(doc.name)}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{tDynamic(doc.specialization)} • {tDynamic(doc.phone)}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between w-full sm:w-auto gap-6 sm:gap-6 mt-2 sm:mt-0">
                                                 <div className="bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-bold border border-indigo-100">
-                                                    {assignedCount} patients
+                                                    {tDynamic(assignedCount)} {tDynamic("patients")}
                                                 </div>
                                                 <div className="flex gap-2 text-gray-400">
                                                     <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>

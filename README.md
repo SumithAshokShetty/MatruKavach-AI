@@ -32,7 +32,7 @@ This diagram walks through the step-by-step workflow of a patient submitting the
    - **Clinical Node**: Evaluates key vitals (systolic/diastolic blood pressure, glucose, weight, hemoglobin).
    - **Geospatial Node**: Uses the patient's coordinates to fetch local weather (temperature, apparent temperature) and air quality (PM2.5 AQI) from the **Open-Meteo API**.
    - **Guidance Node**: Generates a consolidated risk score (0-10) by applying environmental risk multipliers to clinical risk. It outputs specific clinical justifications, dietary adjustments, and environmental safety protocols using **Google Gemini**.
-5. **Real-time Synchronization**: The FastAPI backend persists the results to the SQLite DB and pushes the updates instantly to the Next.js Dashboards using **Socket.IO** (WebSockets).
+5. **Real-time Synchronization**: The FastAPI backend persists the results to the database (PostgreSQL / local SQLite fallback) and pushes the updates instantly to the Next.js Dashboards using **Socket.IO** (WebSockets).
 
 ---
 
@@ -43,7 +43,7 @@ This diagram walks through the step-by-step workflow of a patient submitting the
 | **Frontend Dashboard** | Next.js (React), TailwindCSS, Custom JWT Auth | Clean UI for doctors and health workers with real-time reactive state. |
 | **Backend API Server** | FastAPI (Python), Socket.IO (ASGI) | Asynchronous REST backend & real-time WebSocket communication. |
 | **AI Orchestration** | LangGraph, LangChain, Google Gemini API | Coordinate workflows, structured agent reasoning, and vital parameter evaluations. |
-| **Database** | SQLite, SQLModel (SQLAlchemy) | Embedded SQL database mapping models (MotherProfile, Assessment, Consultations). |
+| **Database** | PostgreSQL (Neon Cloud) / SQLite, SQLModel | Production-ready serverless PostgreSQL (via Neon) with a local SQLite fallback for seamless developer onboarding. |
 | **Integrations** | Telegram Bot API, Open-Meteo API | Direct communication and local environmental sensor/weather tracking. |
 | **Containerization** | Docker, Docker Compose | Consistent environments and single-command deployment. |
 

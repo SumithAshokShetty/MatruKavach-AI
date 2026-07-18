@@ -11,7 +11,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { API_BASE_URL } from "@/lib/api";
 
 export default function DoctorDashboard() {
-    const { t } = useLanguage();
+    const { t, tDynamic } = useLanguage();
     const [mothers, setMothers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -79,8 +79,8 @@ export default function DoctorDashboard() {
                                     <Card variant="solid" className="p-6 hover:border-gray-300 transition-all cursor-pointer h-full group bg-white/80 backdrop-blur-md shadow-sm hover:shadow-md">
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-black transition-colors">{mother.name}</h3>
-                                                <p className="text-sm text-gray-500">ID: {mother.id}</p>
+                                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-black transition-colors">{tDynamic(mother.name)}</h3>
+                                                <p className="text-sm text-gray-500">ID: {tDynamic(mother.id)}</p>
                                             </div>
                                             <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
                                                 Registered
@@ -88,13 +88,13 @@ export default function DoctorDashboard() {
                                         </div>
                                         <div className="space-y-2 text-sm text-gray-600">
                                             <div className="flex items-center gap-2">
-                                                <MapPin className="w-4 h-4 text-gray-400" /> <span>{mother.location || t("mother.noDocs").replace("documents uploaded yet.", "location provided")}</span>
+                                                <MapPin className="w-4 h-4 text-gray-400" /> <span>{tDynamic(mother.location) || tDynamic("N/A")}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-500">{t("common.age")}:</span> {mother.age} | {mother.gestational_age_weeks} {t("common.weeks")}
+                                                <span className="font-semibold text-gray-500">{t("common.age")}:</span> {tDynamic(mother.age)} | {tDynamic(mother.gestational_age_weeks)} {t("common.weeks")}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-500">{t("common.phone")}:</span> {mother.phone}
+                                                <span className="font-semibold text-gray-500">{t("common.phone")}:</span> {tDynamic(mother.phone)}
                                             </div>
                                         </div>
                                     </Card>

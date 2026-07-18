@@ -1,12 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Language, translations } from "@/lib/translations";
+import { Language, translations, translateDynamic } from "@/lib/translations";
 
 interface LanguageContextProps {
     language: Language;
     setLanguage: (lang: Language) => void;
     t: (key: string) => string;
+    tDynamic: (val: any) => string;
 }
 
 const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
@@ -41,8 +42,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         return key;
     };
 
+    const tDynamic = (val: any): string => {
+        if (val === undefined || val === null) return "";
+        return translateDynamic(String(val), language);
+    };
+
     return (
-        <LanguageContext.Provider value={{ language, setLanguage, t }}>
+        <LanguageContext.Provider value={{ language, setLanguage, t, tDynamic }}>
             {children}
         </LanguageContext.Provider>
     );
