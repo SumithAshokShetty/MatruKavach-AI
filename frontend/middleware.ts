@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Force Node.js runtime — Edge Runtime is not supported in Vercel Services
+export const runtime = 'nodejs';
+
 export function middleware(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
     const { pathname } = request.nextUrl;

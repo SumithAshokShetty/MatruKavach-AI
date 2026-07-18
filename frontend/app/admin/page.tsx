@@ -54,7 +54,13 @@ export default function AdminDashboard() {
 
             if (statsRes.ok && mothersRes.ok && docsRes.ok && ashasRes.ok) {
                 setStats(await statsRes.json());
-                setMothers(await mothersRes.json());
+                const mothersData = await mothersRes.json();
+                const sortedMothers = [...mothersData].sort((a: any, b: any) => {
+                    const idA = a.id || "";
+                    const idB = b.id || "";
+                    return idA.localeCompare(idB);
+                });
+                setMothers(sortedMothers);
                 setDoctors(await docsRes.json());
                 setAshas(await ashasRes.json());
             }

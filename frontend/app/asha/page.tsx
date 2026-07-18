@@ -26,7 +26,12 @@ export default function AshaDashboard() {
                 return res.json();
             })
             .then(data => {
-                setMothers(data);
+                const sorted = [...data].sort((a: any, b: any) => {
+                    const idA = a.id || "";
+                    const idB = b.id || "";
+                    return idA.localeCompare(idB);
+                });
+                setMothers(sorted);
                 setError(null);
                 setLoading(false);
             })
