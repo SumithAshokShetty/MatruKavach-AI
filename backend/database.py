@@ -16,16 +16,35 @@ if database_url and "PLACEHOLDER" not in database_url:
     print("==================================================\n")
     engine = create_engine(database_url, echo=True)
 else:
-    # Fallback to local SQLite
     sqlite_file_name = "data/matrukavach.db"
     # Ensure data directory exists
     os.makedirs(os.path.dirname(sqlite_file_name), exist_ok=True)
-    sqlite_url = f"sqlite:///{sqlite_file_name}"
-    connect_args = {"check_same_thread": False}
-    print("\n==================================================")
-    print("DATABASE STATUS: Using local SQLite database...")
-    print("==================================================\n")
-    engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
+    
+    sqlcipher_key = os.getenv("SQLCIPHER_KEY")
+    if sqlcipher_key:
+        try:
+            sqlite_url = f"sqlite+pysqlcipher:///:{sqlcipher_key}@/{sqlite_file_name}"
+            # Test connection parameters
+            engine = create_engine(sqlite_url, echo=True)
+            print("\n==================================================")
+            print("DATABASE STATUS: Using AES-256 Encrypted SQLCipher database...")
+            print("==================================================\n")
+        except Exception as e:
+            print("\n==================================================")
+            print("DATABASE WARNING: SQLCipher drivers are missing on this system.")
+            print(f"Error detail: {e}")
+            print("Falling back to standard unencrypted local SQLite database...")
+            print("==================================================\n")
+            sqlite_url = f"sqlite:///{sqlite_file_name}"
+            connect_args = {"check_same_thread": False}
+            engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
+    else:
+        sqlite_url = f"sqlite:///{sqlite_file_name}"
+        connect_args = {"check_same_thread": False}
+        print("\n==================================================")
+        print("DATABASE STATUS: Using local SQLite database...")
+        print("==================================================\n")
+        engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
 
 def create_db_and_tables():
     import models 

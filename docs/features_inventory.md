@@ -109,3 +109,8 @@ This is a standard industry best practice. It shows the judges that the applicat
 * **Offline-First Route Syncing:** Caches route schedules locally in `localStorage` when network connectivity is lost. Features a `/dispatch/sync` sync endpoint that updates the status of visits (Pending, In Progress, Completed) dynamically once connectivity is restored.
 * **Zero-Lag Optimistic Panel Adjustments:** Admin dashboard utilizes optimistic UI state transitions to update mother care-team assignments instantly on-screen (0ms latency), resolving serverless database cold starts by running API calls silently in the background.
 
+### 13. Database Security & Encryption Layer (SQLCipher & Neon Postgres)
+* **SQLCipher AES-256 Fallback Encryption:** Supports full-file database encryption using SQLite extension libraries ([database.py](file:///c:/Users/user/OneDrive/Desktop/MatruKavach%20AI/backend/database.py)). Integrates with SQLAlchemy's `sqlite+pysqlcipher` dialect, dynamically loading the encryption key `SQLCIPHER_KEY` at runtime with robust try-catch load handlers that fallback gracefully if host dependencies are missing.
+* **Neon Cloud PostgreSQL Encryption at Rest:** Utilizes default enterprise-grade AES-256 encryption at rest (AWS EBS storage layer) and enforced SSL/TLS encryption in-transit for production cloud environments, ensuring patient records are secure on remote servers.
+
+
