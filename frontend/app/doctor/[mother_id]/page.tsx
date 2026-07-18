@@ -203,8 +203,8 @@ export default function DoctorPatientDetail() {
                     ))}
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8 items-start">
-                    <div className="lg:col-span-2 space-y-8">
+                <div className={activeTab === "chat" ? "space-y-8" : "grid lg:grid-cols-3 gap-8 items-start"}>
+                    <div className={activeTab === "chat" ? "" : "lg:col-span-2 space-y-8"}>
 
                     {activeTab === "consultations" && (
                         <div>
@@ -517,11 +517,13 @@ export default function DoctorPatientDetail() {
                         </div>
                     )}
                     </div>
-                    <div className="lg:col-span-1">
-                        {mother && (
-                            <PatientQRCode motherId={mother.id} patientName={mother.name} />
-                        )}
-                    </div>
+                    {activeTab !== "chat" && (
+                        <div className="lg:col-span-1">
+                            {mother && (
+                                <PatientQRCode motherId={mother.id} patientName={mother.name} />
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

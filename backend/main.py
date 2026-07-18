@@ -20,7 +20,7 @@ from fastapi import File, UploadFile, Form
 from datetime import datetime, timedelta
 
 from socket_instance import sio
-from routers import telegram_bot, auth as auth_router, voice as voice_router, share as share_router
+from routers import telegram_bot, auth as auth_router, voice as voice_router, share as share_router, queue_engine as queue_engine_router
 
 create_db_and_tables()
 
@@ -32,6 +32,7 @@ app.include_router(telegram_bot.router)
 app.include_router(auth_router.router)
 app.include_router(voice_router.router)
 app.include_router(share_router.router)
+app.include_router(queue_engine_router.router)
 
 # Read CORS origins from environment variable, fallback to localhost:3000
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
@@ -358,3 +359,21 @@ def assign_hr(mother_id: str, payload: AssignHRInput, session: SessionDep):
     session.commit()
     session.refresh(mother)
     return {"status": "success", "mother_id": mother.id, "assigned_doctor_id": mother.assigned_doctor_id, "assigned_asha_id": mother.assigned_asha_id}
+
+@app.on_event("startup")
+async def startup_event():
+    import asyncio
+    from routers import queue_engine as qe
+    qe.worker_task_ref = asyncio.create_task(qe.process_queue_worker())
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    import asyncio
+    from routers import queue_engine as qe
+    if qe.worker_task_ref:
+        qe.worker_task_ref.cancel()
+        try:
+            await qe.worker_task_ref
+        except asyncio.CancelledError:
+            pass
+

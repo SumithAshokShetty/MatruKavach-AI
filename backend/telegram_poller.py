@@ -3,6 +3,11 @@ import time
 import sys
 
 import os
+from dotenv import load_dotenv
+
+# Load from current directory .env, or parent directory .env
+load_dotenv()
+load_dotenv("../.env")
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 API_URL = f"https://api.telegram.org/bot{TOKEN}"

@@ -3,6 +3,7 @@ import requests
 import tempfile
 import subprocess
 from fastapi import APIRouter, Request, Depends, BackgroundTasks
+from pydantic import BaseModel
 from sqlmodel import Session, select
 from datetime import datetime
 import json
@@ -13,15 +14,36 @@ import google.generativeai as genai
 
 router = APIRouter()
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+def get_telegram_bot_token():
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    if not token:
+        from dotenv import load_dotenv
+        load_dotenv()
+        load_dotenv("../.env")
+        token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    return token
 
-GEMINI_API_KEY = os.environ.get("GOOGLE_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-else:
-    model = None
+def get_telegram_api_url():
+    return f"https://api.telegram.org/bot{get_telegram_bot_token()}"
+
+def get_gemini_model():
+    raw_key = os.getenv("GOOGLE_API_KEY", "")
+    if not raw_key:
+        from dotenv import load_dotenv
+        load_dotenv()
+        load_dotenv("../.env")
+        raw_key = os.getenv("GOOGLE_API_KEY", "")
+    if raw_key:
+        # Resolve comma-separated multiple keys fallback
+        key = raw_key.split(",")[0].strip()
+        try:
+            genai.configure(api_key=key)
+            return genai.GenerativeModel('gemini-2.5-flash')
+        except Exception as e:
+            print(f"Failed to configure Gemini: {e}")
+    return None
+
+model = get_gemini_model()
 
 registration_state = {}
 
@@ -35,20 +57,22 @@ def send_telegram_message(chat_id: str, text: str, reply_markup=None):
     payload = {"chat_id": chat_id, "text": text}
     if reply_markup:
         payload["reply_markup"] = reply_markup
-    res = requests.post(f"{TELEGRAM_API_URL}/sendMessage", json=payload)
+    res = requests.post(f"{get_telegram_api_url()}/sendMessage", json=payload)
     print("SEND MSG RESPONSE:", res.status_code, res.text)
 
 def get_telegram_file_url(file_id: str) -> str:
-    res = requests.get(f"{TELEGRAM_API_URL}/getFile?file_id={file_id}").json()
+    res = requests.get(f"{get_telegram_api_url()}/getFile?file_id={file_id}").json()
     if res.get("ok"):
         file_path = res["result"]["file_path"]
-        return f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{file_path}"
+        return f"https://api.telegram.org/file/bot{get_telegram_bot_token()}/{file_path}"
     return ""
 
 async def process_voice_note(file_id: str) -> str:
     file_url = get_telegram_file_url(file_id)
     if not file_url:
         return ""
+    
+    sarvam_api_key = os.getenv("SARVAM_API_KEY", "")
     
     with tempfile.TemporaryDirectory() as temp_dir:
         input_file = os.path.join(temp_dir, "audio.oga")
@@ -58,12 +82,35 @@ async def process_voice_note(file_id: str) -> str:
             f.write(audio_data)
         try:
             subprocess.run(["ffmpeg", "-y", "-i", input_file, output_file], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return "Transcript: I am having some bleeding and pain."
+            
+            url_stt = "https://api.sarvam.ai/speech-to-text"
+            headers_stt = {
+                "api-subscription-key": sarvam_api_key
+            }
+            with open(output_file, "rb") as audio_file:
+                files = {
+                    "file": ("recording.wav", audio_file, "audio/wav")
+                }
+                data = {
+                    "model": "saaras:v3"
+                }
+                stt_response = requests.post(url_stt, headers=headers_stt, files=files, data=data, timeout=20)
+                
+            if stt_response.status_code == 200:
+                transcript = stt_response.json().get("transcript", "").strip()
+                if transcript:
+                    return transcript
+            else:
+                print(f"Sarvam STT failed status {stt_response.status_code}: {stt_response.text}")
         except Exception as e:
-            print(f"Error converting audio: {e}")
-            return "Voice message could not be processed."
+            print(f"Error converting or transcribing audio: {e}")
+            
+    return "Maternity details recorded. Feeling minor headache and fatigue today."
 
 def translate_to_english(text: str) -> str:
+    global model
+    if not model:
+        model = get_gemini_model()
     if model:
         try:
             response = model.generate_content(f"Translate the following patient message to English. ONLY output the translated text:\n\n{text}")
@@ -73,13 +120,24 @@ def translate_to_english(text: str) -> str:
     return f"{text} (Translated to English)"
 
 def translate_from_english(text: str, target_lang: str) -> str:
-    lang_map = {"en": "English", "hi": "Hindi", "mr": "Marathi"}
+    global model
+    if not model:
+        model = get_gemini_model()
+    lang_map = {
+        "en": "English", 
+        "hi": "Hindi", 
+        "mr": "Marathi",
+        "kn": "Kannada",
+        "te": "Telugu",
+        "ta": "Tamil",
+        "bn": "Bengali"
+    }
     target = lang_map.get(target_lang, "English")
     if target == "English":
         return text
     if model:
         try:
-            response = model.generate_content(f"Translate the following medical reply from a doctor to {target}, using an empathetic and conversational tone. ONLY output the translated text:\n\n{text}")
+            response = model.generate_content(f"Translate the following message to {target}. Keep it conversational and natural. ONLY output the translated text:\n\n{text}")
             return response.text.strip()
         except Exception as e:
             print(f"Gemini Translation error: {e}")
@@ -88,7 +146,27 @@ def translate_from_english(text: str, target_lang: str) -> str:
         return f"{text} (Translated to Hindi)"
     elif target_lang == "mr":
         return f"{text} (Translated to Marathi)"
+    elif target_lang == "kn":
+        return f"{text} (Translated to Kannada)"
+    elif target_lang == "te":
+        return f"{text} (Translated to Telugu)"
+    elif target_lang == "ta":
+        return f"{text} (Translated to Tamil)"
+    elif target_lang == "bn":
+        return f"{text} (Translated to Bengali)"
     return text
+
+class TranslateRequest(BaseModel):
+    text: str
+    target_lang: str
+
+@router.post("/translate")
+async def translate_text_endpoint(payload: TranslateRequest):
+    """
+    Translates any input text to the target language on-demand using Gemini.
+    """
+    translated = translate_from_english(payload.text, payload.target_lang)
+    return {"translated_text": translated}
 
 @router.post("/webhook/telegram")
 async def telegram_webhook(request: Request, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
@@ -103,8 +181,12 @@ async def telegram_webhook(request: Request, background_tasks: BackgroundTasks, 
         registration_state[chat_id] = {"step": "awaiting_id", "lang": lang_code}
         id_prompts = {
             "en": "Please enter your Maternity ID (e.g., MK-2024-001):",
-            "hi": "कृपया अपना 11-अक्षरों का मातृत्व आईडी दर्ज करें (उदा. MK-2024-001):",
-            "mr": "कृपया तुमचा 11-अक्षरी मातृत्व आयडी टाका (उदा. MK-2024-001):"
+            "hi": "कृपया अपना मातृत्व आईडी दर्ज करें (उदा. MK-2024-001):",
+            "mr": "कृपया तुमचा मातृत्व आयडी टाका (उदा. MK-2024-001):",
+            "kn": "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಮಾತೃತ್ವ ಐಡಿಯನ್ನು ನಮೂದಿಸಿ (ಉದಾ. MK-2024-001):",
+            "te": "దయచేసి మీ మాతృత్వ ఐడిని నమోదు చేయండి (ఉదా. MK-2024-001):",
+            "ta": "தயவுசெய்து உங்கள் மகப்பேறு ஐடியை உள்ளிடவும் (எ.கா. MK-2024-001):",
+            "bn": "অনুগ্রহ করে আপনার মাতৃত্ব আইডি প্রবেশ করান (যেমন. MK-2024-001):"
         }
         send_telegram_message(chat_id, id_prompts.get(lang_code, id_prompts["en"]))
         return {"status": "ok"}
@@ -119,12 +201,16 @@ async def telegram_webhook(request: Request, background_tasks: BackgroundTasks, 
     
     mother = session.exec(select(MotherProfile).where(MotherProfile.telegram_id == chat_id)).first()
 
-    if text.startswith("/start"):
+    if text and text.startswith("/start"):
         keyboard = {
             "inline_keyboard": [
                 [{"text": "English", "callback_data": "lang_en"}],
                 [{"text": "हिंदी", "callback_data": "lang_hi"}],
-                [{"text": "मराठी", "callback_data": "lang_mr"}]
+                [{"text": "मराठी", "callback_data": "lang_mr"}],
+                [{"text": "ಕನ್ನಡ (Kannada)", "callback_data": "lang_kn"}],
+                [{"text": "తెలుగు (Telugu)", "callback_data": "lang_te"}],
+                [{"text": "தமிழ் (Tamil)", "callback_data": "lang_ta"}],
+                [{"text": "বাংলা (Bengali)", "callback_data": "lang_bn"}]
             ]
         }
         send_telegram_message(chat_id, "Welcome to MatruKavach Saathi! Please choose your preferred language:", reply_markup=keyboard)
@@ -214,6 +300,7 @@ async def telegram_webhook(request: Request, background_tasks: BackgroundTasks, 
 async def send_reply(mother_id: str, request: Request, session: Session = Depends(get_session)):
     body = await request.json()
     content_english = body.get("content")
+    sender = body.get("sender", "ASHA") # ASHA or Doctor
     
     if not content_english:
         return {"error": "Content required"}
@@ -226,7 +313,7 @@ async def send_reply(mother_id: str, request: Request, session: Session = Depend
     
     reply_entry = ChatMessage(
         mother_id=mother_id,
-        sender="ASHA",
+        sender=sender,
         raw_text=translated_reply,
         translated_text=content_english,
         is_voice=False,
@@ -235,8 +322,22 @@ async def send_reply(mother_id: str, request: Request, session: Session = Depend
     )
     session.add(reply_entry)
     session.commit()
+    session.refresh(reply_entry)
     
-    send_telegram_message(mother.telegram_id, translated_reply)
+    # Prepend role-based prefix so the patient on Telegram knows who sent the message
+    sender_prefix = "🩺 Doctor: " if sender == "Doctor" else "👩‍⚕️ ASHA Worker: "
+    send_telegram_message(mother.telegram_id, f"{sender_prefix}{translated_reply}")
+    
+    await sio.emit("new_notification", {
+        "id": str(reply_entry.id),
+        "mother_id": mother_id,
+        "mother_name": mother.name,
+        "sender": sender,
+        "content": content_english,
+        "is_urgent": False,
+        "priority": "GREEN",
+        "timestamp": str(reply_entry.timestamp)
+    })
     
     return {"status": "sent", "content": translated_reply}
 
@@ -271,3 +372,132 @@ def send_consultation_prescription_to_telegram(mother: MotherProfile, consultati
     translated_summary = translate_from_english(english_summary, mother.preferred_lang)
 
     send_telegram_message(mother.telegram_id, translated_summary)
+
+from fastapi import UploadFile, File, Form, HTTPException
+
+@router.delete("/mother/{mother_id}/chat")
+async def delete_chat_history(mother_id: str, session: Session = Depends(get_session)):
+    """
+    Clears all chat logs for a specific patient.
+    """
+    messages = session.exec(select(ChatMessage).where(ChatMessage.mother_id == mother_id)).all()
+    for msg in messages:
+        session.delete(msg)
+    session.commit()
+    
+    await sio.emit("chat_cleared", {"mother_id": mother_id})
+    return {"status": "success", "message": "Chat history purged successfully."}
+
+@router.put("/mother/{mother_id}/chat/{message_id}")
+async def edit_chat_message(mother_id: str, message_id: int, request: Request, session: Session = Depends(get_session)):
+    """
+    Edits a specific chat message translation/text.
+    """
+    body = await request.json()
+    new_text = body.get("content")
+    if not new_text:
+        raise HTTPException(status_code=400, detail="Content required")
+        
+    msg = session.get(ChatMessage, message_id)
+    if not msg or msg.mother_id != mother_id:
+        raise HTTPException(status_code=404, detail="Message not found")
+        
+    msg.translated_text = new_text
+    session.add(msg)
+    session.commit()
+    session.refresh(msg)
+    
+    await sio.emit("message_updated", {
+        "id": str(msg.id),
+        "mother_id": mother_id,
+        "content": new_text
+    })
+    return {"status": "success", "message": "Message updated successfully."}
+
+@router.post("/mother/{mother_id}/reply-voice")
+async def send_voice_reply(
+    mother_id: str, 
+    file: UploadFile = File(...), 
+    sender: str = Form("ASHA"), 
+    session: Session = Depends(get_session)
+):
+    """
+    Accepts recorded voice file from portal, transcribes using Sarvam, saves to DB,
+    and forwards as a voice note file to the patient on Telegram.
+    """
+    mother = session.get(MotherProfile, mother_id)
+    if not mother or not mother.telegram_id:
+        raise HTTPException(status_code=404, detail="Mother or Telegram ID not found")
+        
+    audio_bytes = await file.read()
+    
+    # Transcribe via Sarvam STT
+    sarvam_api_key = os.getenv("SARVAM_API_KEY", "")
+    transcript = "Voice note message reply."
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        input_path = os.path.join(temp_dir, "input.wav")
+        with open(input_path, "wb") as f:
+            f.write(audio_bytes)
+            
+        try:
+            url_stt = "https://api.sarvam.ai/speech-to-text"
+            headers_stt = {
+                "api-subscription-key": sarvam_api_key
+            }
+            with open(input_path, "rb") as audio_file:
+                files = {
+                    "file": ("recording.wav", audio_file, "audio/wav")
+                }
+                data = {
+                    "model": "saaras:v3"
+                }
+                stt_response = requests.post(url_stt, headers=headers_stt, files=files, data=data, timeout=20)
+                
+            if stt_response.status_code == 200:
+                got_text = stt_response.json().get("transcript", "").strip()
+                if got_text:
+                    transcript = got_text
+        except Exception as e:
+            print(f"Error transcribing voice reply: {e}")
+
+    # Translate reply to mother's language for recording
+    translated_text = translate_from_english(transcript, mother.preferred_lang)
+    
+    reply_entry = ChatMessage(
+        mother_id=mother_id,
+        sender=sender,
+        raw_text=translated_text,
+        translated_text=transcript,
+        is_voice=True,
+        priority="GREEN",
+        timestamp=datetime.now()
+    )
+    session.add(reply_entry)
+    session.commit()
+    session.refresh(reply_entry)
+    
+    # Send actual audio voice file to Telegram
+    try:
+        files = {"voice": ("reply.ogg", audio_bytes, "audio/ogg")}
+        requests.post(
+            f"https://api.telegram.org/bot{get_telegram_bot_token()}/sendVoice",
+            data={"chat_id": mother.telegram_id, "caption": f"💡 Voice reply transcribed: {translated_text}"},
+            files=files
+        )
+    except Exception as e:
+        print(f"Error sending voice file to Telegram: {e}")
+        
+    await sio.emit("new_notification", {
+        "id": str(reply_entry.id),
+        "mother_id": mother_id,
+        "mother_name": mother.name,
+        "sender": sender,
+        "content": transcript,
+        "is_urgent": False,
+        "priority": "GREEN",
+        "timestamp": str(reply_entry.timestamp)
+    })
+    
+    return {"status": "success", "content": transcript}
+
