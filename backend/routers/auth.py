@@ -122,3 +122,55 @@ def read_users_me(current_user: User = Depends(get_current_user)):
         "role": current_user.role,
         "associated_id": current_user.associated_id
     }
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    role: str # admin, doctor, asha
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    specialization: Optional[str] = None
+    location: Optional[str] = None
+
+@router.post("/register")
+def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+    # Check if username already exists
+    existing = db.exec(select(User).where(User.username == payload.username)).first()
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Username already exists"
+        )
+        
+    associated_id = None
+    if payload.role == "doctor":
+        associated_id = f"doc-{payload.username}"
+        from models import Doctor
+        doctor = Doctor(
+            id=associated_id,
+            name=payload.name or f"Dr. {payload.username.capitalize()}",
+            phone=payload.phone or "9999999999",
+            specialization=payload.specialization or "General Physician"
+        )
+        db.add(doctor)
+    elif payload.role == "asha":
+        associated_id = f"asha-{payload.username}"
+        from models import AshaWorker
+        asha = AshaWorker(
+            id=associated_id,
+            name=payload.name or payload.username.capitalize(),
+            phone=payload.phone or "9999999999",
+            location=payload.location or "Mumbai"
+        )
+        db.add(asha)
+        
+    user = User(
+        username=payload.username,
+        password_hash=get_password_hash(payload.password),
+        role=payload.role,
+        associated_id=associated_id
+    )
+    db.add(user)
+    db.commit()
+    return {"status": "success", "username": user.username}
+

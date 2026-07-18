@@ -28,9 +28,15 @@ export function Header() {
                 </Link>
 
                 <nav className="hidden md:flex items-center gap-8 font-medium text-black">
-                    <Link href="/asha" className="hover:text-gray-500 transition-colors">{t("nav.ashaPortal")}</Link>
-                    <Link href="/doctor" className="hover:text-gray-500 transition-colors">{t("nav.doctorPortal")}</Link>
-                    <Link href="/admin" className="hover:text-gray-500 transition-colors">{t("nav.admin")}</Link>
+                    {(!user || user.role === "asha") && (
+                        <Link href="/asha" className="hover:text-gray-500 transition-colors">{t("nav.ashaPortal")}</Link>
+                    )}
+                    {(!user || user.role === "doctor") && (
+                        <Link href="/doctor" className="hover:text-gray-500 transition-colors">{t("nav.doctorPortal")}</Link>
+                    )}
+                    {(!user || user.role === "admin") && (
+                        <Link href="/admin" className="hover:text-gray-500 transition-colors">{t("nav.admin")}</Link>
+                    )}
 
                     {/* Language Dropdown */}
                     <div className="flex items-center gap-2 bg-gray-100/80 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200/60 transition-colors">
@@ -107,9 +113,15 @@ export function Header() {
                         className="md:hidden bg-white border-b border-gray-200"
                     >
                         <nav className="flex flex-col px-4 py-4 gap-4 font-medium text-black shadow-lg">
-                            <Link href="/asha" onClick={() => setIsMobileMenuOpen(false)} className="py-2 border-b border-gray-100 hover:text-gray-500 transition-colors">{t("nav.ashaPortal")}</Link>
-                            <Link href="/doctor" onClick={() => setIsMobileMenuOpen(false)} className="py-2 border-b border-gray-100 hover:text-gray-500 transition-colors">{t("nav.doctorPortal")}</Link>
-                            <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="py-2 hover:text-gray-500 transition-colors">{t("nav.admin")}</Link>
+                            {(!user || user.role === "asha") && (
+                                <Link href="/asha" onClick={() => setIsMobileMenuOpen(false)} className="py-2 border-b border-gray-100 hover:text-gray-500 transition-colors">{t("nav.ashaPortal")}</Link>
+                            )}
+                            {(!user || user.role === "doctor") && (
+                                <Link href="/doctor" onClick={() => setIsMobileMenuOpen(false)} className="py-2 border-b border-gray-100 hover:text-gray-500 transition-colors">{t("nav.doctorPortal")}</Link>
+                            )}
+                            {(!user || user.role === "admin") && (
+                                <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="py-2 hover:text-gray-500 transition-colors">{t("nav.admin")}</Link>
+                            )}
 
                             {!isSignedIn && (
                                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>

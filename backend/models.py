@@ -14,6 +14,8 @@ class AshaWorker(SQLModel, table=True):
     name: str
     phone: str
     location: str
+    latitude: float = Field(default=19.076)
+    longitude: float = Field(default=72.877)
     assigned_mothers: List["MotherProfile"] = Relationship(back_populates="assigned_asha")
 
 class MotherProfile(SQLModel, table=True):
@@ -137,4 +139,17 @@ class User(SQLModel, table=True):
     password_hash: str
     role: str # "admin" | "doctor" | "asha"
     associated_id: Optional[str] = None # linked to Doctor.id or AshaWorker.id
+
+class ShiftSchedule(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    asha_worker_id: str = Field(foreign_key="ashaworker.id")
+    mother_id: str = Field(foreign_key="motherprofile.id")
+    visit_sequence: int
+    scheduled_date: datetime = Field(default_factory=datetime.now)
+    status: str = Field(default="PENDING")  # PENDING, IN_PROGRESS, COMPLETED
+    google_maps_link: Optional[str] = None
+    travel_mode: str = Field(default="two-wheeler")  # walking or two-wheeler
+    distance_km: float = Field(default=0.0)
+    estimated_service_time_mins: int = Field(default=15)
+
 

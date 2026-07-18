@@ -11,7 +11,7 @@ import json
 import requests
 
 from database import create_db_and_tables, get_session
-from models import MotherProfile, AssessmentData, RiskAssessment, VitalsInput, ChatMessage, Consultation, Document, Doctor, AshaWorker
+from models import MotherProfile, AssessmentData, RiskAssessment, VitalsInput, ChatMessage, Consultation, Document, Doctor, AshaWorker, ShiftSchedule
 from agents.orchestrator import MatruKavachOrchestrator
 import socketio
 import os
@@ -20,7 +20,7 @@ from fastapi import File, UploadFile, Form
 from datetime import datetime, timedelta
 
 from socket_instance import sio
-from routers import telegram_bot, auth as auth_router, voice as voice_router, share as share_router, queue_engine as queue_engine_router, ehr_sync
+from routers import telegram_bot, auth as auth_router, voice as voice_router, share as share_router, queue_engine as queue_engine_router, ehr_sync, dispatch as dispatch_router
 
 create_db_and_tables()
 
@@ -34,6 +34,7 @@ app.include_router(voice_router.router)
 app.include_router(share_router.router)
 app.include_router(queue_engine_router.router)
 app.include_router(ehr_sync.router)
+app.include_router(dispatch_router.router)
 
 # Read CORS origins from environment variable, fallback to localhost:3000
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
@@ -317,18 +318,88 @@ def get_admin_stats(session: SessionDep):
     doctors = session.exec(select(Doctor)).all()
     ashas = session.exec(select(AshaWorker)).all()
     
-    fully_assigned = sum(1 for m in total_mothers if m.assigned_doctor_id and m.assigned_asha_id)
-    needs_assignment = len(total_mothers) - fully_assigned
+    fully_assigned_list = []
+    needs_assignment_list = []
+    for m in total_mothers:
+        m_info = {"id": m.id, "name": m.name, "location": m.location or "N/A"}
+        if m.assigned_doctor_id and m.assigned_asha_id:
+            fully_assigned_list.append(m_info)
+        else:
+            needs_assignment_list.append(m_info)
 
     doctor_workloads = [{"id": d.id, "name": d.name, "count": len(d.assigned_mothers)} for d in doctors]
     asha_workloads = [{"id": a.id, "name": a.name, "count": len(a.assigned_mothers)} for a in ashas]
+
+    # Calculate visit status metrics and lists
+    schedules = session.exec(select(ShiftSchedule)).all()
+    visits_completed_list = []
+    visits_pending_list = []
+    visits_in_progress_list = []
     
+    for s in schedules:
+        m = session.get(MotherProfile, s.mother_id)
+        a = session.get(AshaWorker, s.asha_worker_id)
+        v_info = {
+            "id": s.mother_id,
+            "name": m.name if m else "Unknown",
+            "asha_name": a.name if a else "Unknown",
+            "distance_km": s.distance_km
+        }
+        if s.status == "COMPLETED":
+            visits_completed_list.append(v_info)
+        elif s.status == "IN_PROGRESS":
+            visits_in_progress_list.append(v_info)
+        else:
+            visits_pending_list.append(v_info)
+
+    # Calculate patient risk levels
+    critical_cases_list = []
+    high_risk_cases_list = []
+    medium_risk_cases_list = []
+    low_risk_cases_list = []
+
+    for m in total_mothers:
+        latest_risk = session.exec(
+            select(RiskAssessment)
+            .where(RiskAssessment.mother_id == m.id)
+            .order_by(RiskAssessment.timestamp.desc())
+        ).first()
+        m_info = {"id": m.id, "name": m.name, "location": m.location or "N/A"}
+        if latest_risk:
+            lvl = latest_risk.risk_level.upper() if latest_risk.risk_level else "LOW"
+            if "CRITICAL" in lvl:
+                critical_cases_list.append(m_info)
+            elif "HIGH" in lvl:
+                high_risk_cases_list.append(m_info)
+            elif "MODERATE" in lvl or "MEDIUM" in lvl:
+                medium_risk_cases_list.append(m_info)
+            else:
+                low_risk_cases_list.append(m_info)
+        else:
+            low_risk_cases_list.append(m_info)
+
     return {
         "total_mothers": len(total_mothers),
         "total_doctors": len(doctors),
         "total_ashas": len(ashas),
-        "fully_assigned": fully_assigned,
-        "needs_assignment": needs_assignment,
+        "fully_assigned": len(fully_assigned_list),
+        "needs_assignment": len(needs_assignment_list),
+        "visits_completed": len(visits_completed_list),
+        "visits_pending": len(visits_pending_list),
+        "visits_in_progress": len(visits_in_progress_list),
+        "critical_cases": len(critical_cases_list),
+        "high_risk_cases": len(high_risk_cases_list),
+        "medium_risk_cases": len(medium_risk_cases_list),
+        "low_risk_cases": len(low_risk_cases_list),
+        "fully_assigned_list": fully_assigned_list,
+        "needs_assignment_list": needs_assignment_list,
+        "visits_completed_list": visits_completed_list,
+        "visits_pending_list": visits_pending_list,
+        "visits_in_progress_list": visits_in_progress_list,
+        "critical_cases_list": critical_cases_list,
+        "high_risk_cases_list": high_risk_cases_list,
+        "medium_risk_cases_list": medium_risk_cases_list,
+        "low_risk_cases_list": low_risk_cases_list,
         "doctor_workloads": sorted(doctor_workloads, key=lambda x: x["count"], reverse=True),
         "asha_workloads": sorted(asha_workloads, key=lambda x: x["count"], reverse=True)
     }

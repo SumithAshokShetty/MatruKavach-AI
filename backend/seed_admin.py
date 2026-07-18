@@ -1,21 +1,15 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 from database import engine, create_db_and_tables
 from models import Doctor, AshaWorker, MotherProfile, User
 from routers.auth import get_password_hash
 
 def seed_db():
+    print("Dropping all tables on Neon...")
+    SQLModel.metadata.drop_all(engine)
+    print("Recreating tables...")
     create_db_and_tables()
+    
     with Session(engine) as session:
-        
-        # Clear existing doctors & asha workers to avoid duplicate entries and count issues
-        for d in session.exec(select(Doctor)).all():
-            session.delete(d)
-        for a in session.exec(select(AshaWorker)).all():
-            session.delete(a)
-        for u in session.exec(select(User)).all():
-            session.delete(u)
-        session.commit()
-
         doctors = [
             Doctor(id="doc-1", name="Dr. Arjun Rao", phone="9876543210", specialization="Obstetrician"),
             Doctor(id="doc-2", name="Dr. Meera Shah", phone="9876543211", specialization="Gynecologist"),
@@ -57,9 +51,13 @@ def seed_db():
             User(username="admin", password_hash=hashed_admin_pass, role="admin"),
         ]
         
-        for i in range(1, 11):
-            users.append(User(username=f"doctor{i}", password_hash=hashed_doc_pass, role="doctor", associated_id=f"doc-{i}"))
-            users.append(User(username=f"asha{i}", password_hash=hashed_asha_pass, role="asha", associated_id=f"asha-{i}"))
+        for d in doctors:
+            username = d.name.lower().replace("dr. ", "").replace(" ", "")
+            users.append(User(username=username, password_hash=hashed_doc_pass, role="doctor", associated_id=d.id))
+            
+        for a in ashas:
+            username = a.name.lower().replace(" ", "")
+            users.append(User(username=username, password_hash=hashed_asha_pass, role="asha", associated_id=a.id))
             
         session.add_all(users)
         session.commit()
