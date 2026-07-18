@@ -27,7 +27,7 @@ An 8-phase end-to-end walkthrough from patient onboarding to bidirectional commu
 
 2. **Voice or Text Input**: She sends a voice note (Hindi/Marathi/etc.) or text message. Voice notes are transcribed using **Sarvam AI (saaras:v3 STT)**, converted from `.oga → .wav` via `ffmpeg`, and translated to English via **Google Gemini** (with Groq as fallback).
 
-3. **Emergency Keyword Scan ⚡**: The translated text is instantly scanned for critical keywords (`bleeding`, `khoon`, `severe pain`, `water broke`, `vomiting`, etc.). If matched — AI is **bypassed entirely** and an instant **RED alert** fires via Socket.IO to all ASHA and Doctor dashboards.
+3. **Emergency Keyword Scan**: The translated text is instantly scanned for critical keywords (`bleeding`, `khoon`, `severe pain`, `water broke`, `vomiting`, etc.). If matched — AI is **bypassed entirely** and an instant **RED alert** fires via Socket.IO to all ASHA and Doctor dashboards.
 
 4. **Multi-Agent LangGraph Orchestration**: If no emergency is detected, the data enters a **LangGraph StateGraph ReAct loop**:
    - **Clinical Agent** (`assess_clinical_risk`): Scores 6 vitals — BP, haemoglobin, glucose, weight — against clinical thresholds (Preeclampsia, Anaemia, Gestational Diabetes)
@@ -37,9 +37,9 @@ An 8-phase end-to-end walkthrough from patient onboarding to bidirectional commu
 
 5. **Real-Time Synchronisation**: Results are persisted to PostgreSQL (Neon Cloud) / SQLite fallback and pushed instantly to Next.js dashboards via **Socket.IO WebSockets**. The mother receives a personalised reply in her language on Telegram.
 
-6. **ASHA Dispatch Optimisation**: For HIGH/CRITICAL patients, Google **OR-Tools VRP solver** generates risk-prioritised, distance-optimised visit routes with travel mode recommendations (🚶 walking / 🛵 scooter) and Google Maps deep-links.
+6. **ASHA Dispatch Optimisation**: For HIGH/CRITICAL patients, Google **OR-Tools VRP solver** generates risk-prioritised, distance-optimised visit routes with travel mode recommendations (walking / scooter) and Google Maps deep-links.
 
-7. **Bidirectional Communication**: ASHA workers and doctors can send text or voice replies from the portal. Replies are auto-translated to the mother's language and delivered on Telegram with role prefixes (`🩺 Doctor:` / `👩‍⚕️ ASHA Worker:`).
+7. **Bidirectional Communication**: ASHA workers and doctors can send text or voice replies from the portal. Replies are auto-translated to the mother's language and delivered on Telegram with role prefixes (`Doctor:` / `ASHA Worker:`).
 
 ---
 
