@@ -1,11 +1,13 @@
 "use client";
 
+import React, { useState } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { 
   ArrowRight, Brain, Mic, Navigation, ShieldCheck, 
-  MessageCircle, Users, Globe, User as UserIcon, LogOut
+  MessageCircle, Users, Globe, User as UserIcon, LogOut,
+  Menu, X
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/components/LanguageContext";
 import { useAuth } from "@/components/AuthContext";
@@ -15,6 +17,7 @@ export default function Home() {
   const { t, language, setLanguage, tDynamic } = useLanguage();
   const { user, logout } = useAuth();
   const isSignedIn = !!user;
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getDashboardPath = () => {
     if (!user) return "/login";
@@ -63,7 +66,7 @@ export default function Home() {
               <Link href="/admin" className="hover:text-accent transition-colors">{t("nav.admin")}</Link>
             )}
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             {/* Language Switcher Selector */}
             <div className="flex items-center gap-1.5 bg-gray-100/80 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200/60 transition-colors">
               <Globe className="w-4 h-4 text-gray-500" />
@@ -98,13 +101,90 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Mobile Hamburger Trigger */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-[#111111] focus:outline-none"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
-      <main className="flex-1 flex flex-col max-w-[1280px] w-full mx-auto px-4 md:px-12 lg:px-[120px] pt-24 pb-32 space-y-[160px]">
+      {/* Mobile Drawer Dropdown */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <div className="w-full flex justify-center px-4 fixed top-[96px] left-0 right-0 z-50 pointer-events-none md:hidden">
+            <motion.div
+              initial={{ opacity: 0, y: -15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full bg-white/95 backdrop-blur-md rounded-[24px] shadow-[0_12px_32px_rgba(0,0,0,0.12)] border border-[#E8E8E8] p-6 pointer-events-auto"
+            >
+              <nav className="flex flex-col gap-4 font-bold text-[#5F5F5F]">
+                {(!user || user.role === "asha") && (
+                  <Link href="/asha" onClick={() => setIsMobileMenuOpen(false)} className="py-2.5 border-b border-gray-100 hover:text-accent transition-colors">{t("nav.ashaPortal")}</Link>
+                )}
+                {(!user || user.role === "doctor") && (
+                  <Link href="/doctor" onClick={() => setIsMobileMenuOpen(false)} className="py-2.5 border-b border-gray-100 hover:text-accent transition-colors">{t("nav.doctorPortal")}</Link>
+                )}
+                {(!user || user.role === "admin") && (
+                  <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="py-2.5 border-b border-gray-100 hover:text-accent transition-colors">{t("nav.admin")}</Link>
+                )}
+
+                {/* Mobile Language selector */}
+                <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 text-sm mt-1">
+                  <Globe className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-500 font-semibold">Language</span>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value as Language)}
+                    className="bg-transparent text-sm font-bold text-gray-850 outline-none cursor-pointer ml-auto pr-2"
+                  >
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.nativeLabel}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Mobile User Credentials */}
+                {isSignedIn && (
+                  <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 text-sm mt-1">
+                    <UserIcon className="w-4 h-4 text-gray-400" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-gray-850 truncate leading-none mb-1">{user?.username}</span>
+                      <span className="text-xs text-gray-400 capitalize leading-none">{user?.role} Portal</span>
+                    </div>
+                  </div>
+                )}
+
+                {!isSignedIn ? (
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <button className="py-2.5 mt-2 w-full bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all text-center">
+                      {t("nav.signIn")}
+                    </button>
+                  </Link>
+                ) : (
+                  <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="py-2.5 mt-2 w-full bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold hover:bg-red-100 transition-all flex items-center justify-center gap-2">
+                    <LogOut className="w-4 h-4" /> {t("nav.signOut")}
+                  </button>
+                )}
+              </nav>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <main className="flex-1 flex flex-col max-w-[1280px] w-full mx-auto px-4 md:px-12 lg:px-[120px] pt-16 md:pt-24 pb-32 space-y-[160px]">
 
         {/* Hero Section */}
-        <section className="relative flex flex-col items-center text-center space-y-8 pt-8 md:pt-12 z-10 w-full overflow-hidden">
+        <section className="relative flex flex-col items-center text-center space-y-8 pt-2 md:pt-12 z-10 w-full overflow-hidden">
           
           {/* Animated Waving Stripes on left/right edges */}
           <WavingBars align="left" />
