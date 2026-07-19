@@ -46,34 +46,20 @@ export default function LoginPage() {
 
         const res = await login(username, password);
         if (res.success) {
-            const storedToken = localStorage.getItem("auth_token");
-            try {
-                const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/me`, {
-                    headers: { Authorization: `Bearer ${storedToken}` }
-                });
-                const searchParams = new URLSearchParams(window.location.search);
-                const redirectUrl = searchParams.get("redirect");
-                
-                if (meRes.ok) {
-                    const profile = await meRes.json();
-                    if (redirectUrl) {
-                        router.push(redirectUrl);
-                    } else if (profile.role === "admin") {
-                        router.push("/admin");
-                    } else if (profile.role === "doctor") {
-                        router.push("/doctor");
-                    } else if (profile.role === "asha") {
-                        router.push("/asha");
-                    } else {
-                        router.push("/");
-                    }
-                } else {
-                    router.push(redirectUrl || "/");
-                }
-            } catch (err) {
-                const searchParams = new URLSearchParams(window.location.search);
-                const redirectUrl = searchParams.get("redirect");
-                router.push(redirectUrl || "/");
+            const searchParams = new URLSearchParams(window.location.search);
+            const redirectUrl = searchParams.get("redirect");
+            
+            const role = res.user?.role;
+            if (redirectUrl) {
+                router.push(redirectUrl);
+            } else if (role === "admin") {
+                router.push("/admin");
+            } else if (role === "doctor") {
+                router.push("/doctor");
+            } else if (role === "asha") {
+                router.push("/asha");
+            } else {
+                router.push("/");
             }
         } else {
             setError(res.error || "Invalid credentials. Please verify your username and password.");

@@ -13,7 +13,7 @@ interface AuthContextType {
     user: User | null;
     token: string | null;
     loading: boolean;
-    login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    login: (username: string, password: string) => Promise<{ success: boolean; user?: User; error?: string }>;
     logout: () => void;
 }
 
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 document.cookie = `token=${data.access_token}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax;`;
                 setToken(data.access_token);
                 setUser(data.user);
-                return { success: true };
+                return { success: true, user: data.user };
             }
             if (res.status === 401) {
                 return { success: false, error: "Invalid credentials. Please verify your username and password." };
