@@ -19,6 +19,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to automatically retry network requests during database wakeups (Neon DB autosuspension)
+const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 2, delay = 1500): Promise<Response> => {
+    try {
+        const response = await fetch(url, options);
+        // If server returns a bad gateway or service unavailable (common during render restarts), retry
+        if ([502, 503, 504].includes(response.status) && retries > 0) {
+            throw new Error(`Server temporarily unavailable (${response.status})`);
+        }
+        return response;
+    } catch (error) {
+        if (retries > 0) {
+            console.warn(`Connection failed. Retrying in ${delay}ms... (${retries} retries left)`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(url, options, retries - 1, delay);
+        }
+        throw error;
+    }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
@@ -26,10 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
+        // Fire a background warm-up ping to wake up the Render container and Neon Database immediately on mount
+        fetch(API_BASE_URL).catch(() => {});
+
         const storedToken = localStorage.getItem("auth_token");
         if (storedToken) {
             setToken(storedToken);
-            fetch(`${API_BASE_URL}/auth/me`, {
+            fetchWithRetry(`${API_BASE_URL}/auth/me`, {
                 headers: {
                     Authorization: `Bearer ${storedToken}`
                 }
@@ -60,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (username: string, password: string) => {
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/login`, {
+            const res = await fetchWithRetry(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -83,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return { success: false, error: `Server error: HTTP ${res.status}` };
         } catch (e) {
             console.error("Login failed", e);
-            return { success: false, error: `Could not connect to the backend server. Please verify the backend is running at ${API_BASE_URL}.` };
+            return { success: false, error: "Could not connect to the backend server. The database is taking a few seconds to spin up from sleep mode. Please try again in 5 seconds." };
         }
     };
 
