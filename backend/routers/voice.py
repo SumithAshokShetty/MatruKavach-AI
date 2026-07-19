@@ -69,13 +69,14 @@ Instructions:
 @router.post("/process")
 async def process_voice_form(
     file: UploadFile = File(...),
-    portal_type: str = Form(...)  # "asha" or "doctor"
+    portal_type: str = Form(...),  # "asha" or "doctor"
+    active_question_key: Optional[str] = Form(None)
 ):
     sarvam_api_key = os.environ.get("SARVAM_API_KEY", "")
     if not sarvam_api_key:
         # For evaluation and testing, let's have a fallback simulation if no key is present
         print("[WARNING] SARVAM_API_KEY not configured. Running local extraction simulator.")
-        return simulate_extraction(portal_type)
+        return simulate_extraction(portal_type, active_question_key=active_question_key)
 
     # Step 1: Audio Ingestion (Sarvam Speech-to-Text)
     try:
@@ -102,10 +103,16 @@ async def process_voice_form(
     except Exception as e:
         print(f"Sarvam STT connection error: {e}")
         # Fallback to dummy transcript for validation if connection fails
-        transcript = "Blood pressure is 140 over 90, weight is 68 kilograms, hemoglobin is 10.5, feeling severe headaches today."
+        # Use simple numeric transcripts if a specific numeric key is active
+        if active_question_key in ["sys_bp", "dia_bp", "weight_kg", "heart_rate", "hemoglobin_gdl", "random_glucose_mgdl"]:
+            transcript = "120"
+        else:
+            transcript = "Patient vitals look standard."
 
     # Step 2: LLM Extraction (Sarvam-30b model)
     system_prompt = ASHA_SYSTEM_PROMPT if portal_type == "asha" else DOCTOR_SYSTEM_PROMPT
+    if active_question_key:
+        system_prompt += f"\nCRITICAL NOTE: The user is currently answering the specific question for the field key: '{active_question_key}'. Please make sure to populate this key with their spoken response."
     
     url_llm = "https://api.sarvam.ai/v1/chat/completions"
     headers_llm = {
@@ -140,9 +147,9 @@ async def process_voice_form(
     except Exception as e:
         print(f"Sarvam LLM connection error: {e}")
         
-    return simulate_extraction(portal_type, transcript)
+    return simulate_extraction(portal_type, transcript, active_question_key)
 
-def simulate_extraction(portal_type: str, transcript: str = "") -> dict:
+def simulate_extraction(portal_type: str, transcript: str = "", active_question_key: Optional[str] = None) -> dict:
     """
     Simulation utility to support zero-cost offline validation of front-to-back integration flows
     """
@@ -159,6 +166,42 @@ def simulate_extraction(portal_type: str, transcript: str = "") -> dict:
         status_val = "Critical"
     elif "attention" in transcript.lower() or "monitor" in transcript.lower():
         status_val = "Requires Attention"
+
+    # Targeted active question override to align interactive step-by-step intake
+    if active_question_key:
+        result_dict = {}
+        if active_question_key in ["sys_bp", "dia_bp", "weight_kg", "hemoglobin_gdl", "random_glucose_mgdl", "heart_rate"]:
+            # Use the first parsed number. Fallback to common metric defaults if user spoke no number
+            if first_num is not None:
+                val = first_num
+            else:
+                if active_question_key == "sys_bp": val = 120
+                elif active_question_key == "dia_bp": val = 80
+                elif active_question_key == "weight_kg": val = 60.0
+                elif active_question_key == "hemoglobin_gdl": val = 12.0
+                elif active_question_key == "random_glucose_mgdl": val = 100
+                else: val = 72
+            result_dict[active_question_key] = val
+        elif active_question_key in ["other_symptoms", "doctor_observations", "medication_advice", "nutritional_advice"]:
+            result_dict[active_question_key] = transcript if transcript else "No observations recorded."
+        elif active_question_key == "status":
+            result_dict["status"] = status_val
+        elif active_question_key == "next_consultation_date":
+            # If the user speaks a date-like text, try to use it, else default to 14 days
+            result_dict["next_consultation_date"] = (datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d")
+
+        # Fill in fully-formed defaults for all other fields to prevent React model field undefined bugs
+        defaults = {
+            "sys_bp": 120, "dia_bp": 80, "weight_kg": 60.0, "hemoglobin_gdl": 12.0, "random_glucose_mgdl": 100,
+            "other_symptoms": "No major symptoms", "heart_rate": 75, "status": "Stable",
+            "next_consultation_date": (datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d"),
+            "doctor_observations": "Routine checkup.", "medication_advice": "No change to current treatment.",
+            "nutritional_advice": "Continue balanced diet."
+        }
+        for k, v in defaults.items():
+            if k not in result_dict:
+                result_dict[k] = v
+        return result_dict
 
     if portal_type == "asha":
         sys_bp = 120

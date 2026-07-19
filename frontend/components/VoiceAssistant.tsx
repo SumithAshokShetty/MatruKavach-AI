@@ -89,6 +89,7 @@ export function VoiceAssistant({ portalType, onComplete, onCancel, onChange }: V
     const formData = new FormData();
     formData.append("file", blob, "recording.wav");
     formData.append("portal_type", portalType);
+    formData.append("active_question_key", activeQuestion.key);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/voice/process`, {
