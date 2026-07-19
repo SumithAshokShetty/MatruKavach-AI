@@ -84,8 +84,10 @@ An 8-phase end-to-end walkthrough from patient onboarding to bidirectional commu
 - **🏥 FHIR EHR Integration** — HL7 FHIR JSON bundles (LOINC `85354-9`, `718-7`) synced to patient profile for historical trend analysis
 - **🔗 QR Record Sharing** — Cryptographic JWT tokens generate time-limited (24-hr) QR codes for secure cross-portal record referrals
 - **🌐 7-Language Portal Localisation** — Full frontend localisation via `LanguageContext` covering English, Hindi, Marathi, Kannada, Telugu, Tamil, Bengali
+- **📱 Progressive Web App (PWA)** — Installable standalone PWA via `manifest.json` + `apple-mobile-web-app-capable`; network-first Service Worker (`sw.js`) pre-caches assets and enables offline page loads; horizontally scrollable dashboard tabs scale gracefully across all mobile viewports
 
 ---
+
 
 ## 🔐 Security Architecture
 

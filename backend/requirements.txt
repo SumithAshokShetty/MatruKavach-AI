@@ -24,3 +24,4 @@ langchain-groq
 redis==5.0.1
 # Optional for local fallback database file encryption (SQLCipher)
 # pysqlcipher3-binary
+ortools
