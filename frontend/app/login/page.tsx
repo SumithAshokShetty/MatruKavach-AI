@@ -51,15 +51,15 @@ export default function LoginPage() {
             
             const role = res.user?.role;
             if (redirectUrl) {
-                router.push(redirectUrl);
+                window.location.href = redirectUrl;
             } else if (role === "admin") {
-                router.push("/admin");
+                window.location.href = "/admin";
             } else if (role === "doctor") {
-                router.push("/doctor");
+                window.location.href = "/doctor";
             } else if (role === "asha") {
-                router.push("/asha");
+                window.location.href = "/asha";
             } else {
-                router.push("/");
+                window.location.href = "/";
             }
         } else {
             setError(res.error || "Invalid credentials. Please verify your username and password.");

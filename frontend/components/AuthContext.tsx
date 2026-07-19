@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         document.cookie = "token=; path=/; max-age=0; SameSite=Lax; Secure;";
         setToken(null);
         setUser(null);
-        router.push("/login");
+        window.location.href = "/login";
     };
 
     return (
