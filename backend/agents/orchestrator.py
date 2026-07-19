@@ -86,7 +86,7 @@ class MatruKavachOrchestrator:
             nutrition_advice={},  # Left empty until doctor reviews and confirms guidance
             medication_reminders=[], 
             environmental_impact=current_values.get("environmental_impact", ""),
-            clinical_justification="AWAITING_APPROVAL: Graph execution paused. Awaiting medical practitioner confirmation.",
+            clinical_justification=f"[PENDING CLINICIAN CONFIRMATION] {current_values.get('clinical_justification', 'Awaiting medical practitioner confirmation.')}",
             timestamp=datetime.now()
         )
 

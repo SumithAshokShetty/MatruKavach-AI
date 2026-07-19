@@ -360,9 +360,19 @@ function AssessmentContent() {
                                     <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
                                         <Activity className="w-4 h-4 text-primary" /> {translateDynamic("AI Clinical Justification", language)}
                                     </h3>
-                                    <p className="text-gray-700 text-sm italic border-l-2 border-primary/40 pl-3">
-                                        "{translateDynamic(result.clinical_justification || 'Standard clinical rules applied.', language)}"
-                                    </p>
+                                    <div className="text-gray-700 text-sm italic border-l-2 border-primary/40 pl-3">
+                                        {result.clinical_justification?.startsWith("[PENDING CLINICIAN CONFIRMATION]") ? (
+                                            <div className="space-y-2">
+                                                <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-amber-200 not-italic uppercase tracking-wider">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                    Pending Clinician Review
+                                                </div>
+                                                <p>"{translateDynamic(result.clinical_justification.replace("[PENDING CLINICIAN CONFIRMATION] ", ""), language)}"</p>
+                                            </div>
+                                        ) : (
+                                            <p>"{translateDynamic(result.clinical_justification || 'Standard clinical rules applied.', language)}"</p>
+                                        )}
+                                    </div>
 
                                     {result.environmental_impact && (
                                         <div className="pt-2">

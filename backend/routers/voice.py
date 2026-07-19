@@ -147,6 +147,8 @@ def simulate_extraction(portal_type: str, transcript: str = "") -> dict:
     Simulation utility to support zero-cost offline validation of front-to-back integration flows
     """
     import re
+    from datetime import datetime, timedelta
+    
     # Extract any integers or decimals from transcript
     numbers = [float(x) if '.' in x else int(x) for x in re.findall(r'\d+(?:\.\d+)?', transcript)]
     first_num = numbers[0] if numbers else None
@@ -159,23 +161,86 @@ def simulate_extraction(portal_type: str, transcript: str = "") -> dict:
         status_val = "Requires Attention"
 
     if portal_type == "asha":
+        sys_bp = 120
+        dia_bp = 80
+        if len(numbers) >= 2:
+            sys_bp = int(numbers[0])
+            dia_bp = int(numbers[1])
+        elif first_num:
+            sys_bp = int(first_num)
+
+        weight_kg = 60.0
+        if len(numbers) >= 3:
+            weight_kg = float(numbers[2])
+
+        hb = 12.0
+        if len(numbers) >= 4:
+            hb = float(numbers[3])
+
+        glucose = 100
+        if len(numbers) >= 5:
+            glucose = int(numbers[4])
+
         return {
-            "sys_bp": first_num if first_num else 120,
-            "dia_bp": first_num if first_num else 80,
-            "weight_kg": first_num if first_num else 60.0,
-            "hemoglobin_gdl": first_num if first_num else 12.0,
-            "random_glucose_mgdl": first_num if first_num else 100,
+            "sys_bp": sys_bp,
+            "dia_bp": dia_bp,
+            "weight_kg": weight_kg,
+            "hemoglobin_gdl": hb,
+            "random_glucose_mgdl": glucose,
             "other_symptoms": transcript if transcript else "No major symptoms reported"
         }
     else:
+        # Smart sentence routing based on medical and dietary keywords
+        sentences = [s.strip() for s in re.split(r'[.!?]+', transcript) if s.strip()]
+        
+        med_keywords = ["tablet", "pill", "medicine", "medication", "prescribe", "dosage", "supplement", "iron", "calcium", "mg", "capsule", "treatment", "avoid", "prescribed"]
+        nut_keywords = ["diet", "eat", "food", "nutrition", "water", "drink", "fruit", "vegetable", "meal", "protein", "sodium", "salt", "sugar", "coconut"]
+        
+        med_list = []
+        nut_list = []
+        obs_list = []
+        
+        for s in sentences:
+            s_lower = s.lower()
+            is_med = any(kw in s_lower for kw in med_keywords)
+            is_nut = any(kw in s_lower for kw in nut_keywords)
+            
+            if is_med:
+                med_list.append(s)
+            elif is_nut:
+                nut_list.append(s)
+            else:
+                obs_list.append(s)
+                
+        med_advice = ". ".join(med_list) + "." if med_list else "No change to current treatment."
+        nut_advice = ". ".join(nut_list) + "." if nut_list else "Continue balanced diet."
+        obs_text = ". ".join(obs_list) + "." if obs_list else (transcript if transcript else "Routine follow-up.")
+
+        # BP extraction
+        sys_bp = 120
+        dia_bp = 80
+        if len(numbers) >= 2:
+            sys_bp = int(numbers[0])
+            dia_bp = int(numbers[1])
+        elif first_num:
+            sys_bp = int(first_num)
+            
+        weight_kg = 60.0
+        if len(numbers) >= 3:
+            weight_kg = float(numbers[2])
+            
+        heart_rate = 75
+        if len(numbers) >= 4:
+            heart_rate = int(numbers[3])
+
         return {
-            "sys_bp": first_num if first_num else 120,
-            "dia_bp": first_num if first_num else 80,
-            "weight_kg": first_num if first_num else 60.0,
-            "heart_rate": first_num if first_num else 75,
+            "sys_bp": sys_bp,
+            "dia_bp": dia_bp,
+            "weight_kg": weight_kg,
+            "heart_rate": heart_rate,
             "status": status_val,
-            "next_consultation_date": "2026-08-15",
-            "doctor_observations": transcript if transcript else "Routine follow-up.",
-            "medication_advice": "No change to current treatment.",
-            "nutritional_advice": "Continue balanced diet."
+            "next_consultation_date": (datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d"),
+            "doctor_observations": obs_text,
+            "medication_advice": med_advice,
+            "nutritional_advice": nut_advice
         }

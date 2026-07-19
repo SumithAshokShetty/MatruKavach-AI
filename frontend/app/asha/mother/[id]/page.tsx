@@ -24,6 +24,7 @@ export default function MotherDetailPage() {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    const [syncStatus, setSyncStatus] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
         async function fetchData() {
@@ -49,25 +50,30 @@ export default function MotherDetailPage() {
 
     const handleEHRSync = async () => {
         setSyncing(true);
+        setSyncStatus(null);
         try {
             const res = await fetch(`${API_BASE_URL}/api/ehr/sync/${motherId}`, {
                 method: "POST"
             });
             if (res.ok) {
                 const data = await res.json();
-                alert(`EHR Sync successful!\nSynced Hemoglobin: ${data.synced_data.historical_hb} g/dL\nSynced BP: ${data.synced_data.historical_bp} mmHg`);
+                setSyncStatus({
+                    message: `EHR Sync successful! Synced Hb: ${data.synced_data.historical_hb} g/dL, BP: ${data.synced_data.historical_bp} mmHg`,
+                    type: "success"
+                });
                 
                 // Refresh mother profile
                 const motherRes = await fetch(`${API_BASE_URL}/mother/${motherId}`);
                 if (motherRes.ok) setMother(await motherRes.json());
             } else {
-                alert("EHR Synchronization failed");
+                setSyncStatus({ message: "EHR Synchronization failed", type: "error" });
             }
         } catch (err) {
             console.error("EHR Sync failed", err);
-            alert("Error connecting to EHR Gateway");
+            setSyncStatus({ message: "Error connecting to EHR Gateway", type: "error" });
         } finally {
             setSyncing(false);
+            setTimeout(() => setSyncStatus(null), 4000);
         }
     };
 
@@ -113,6 +119,21 @@ export default function MotherDetailPage() {
 
     return (
         <div className="space-y-6 pb-20">
+            {syncStatus && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className={`p-4 rounded-2xl border text-sm font-bold flex items-center justify-between shadow-sm transition-all ${
+                        syncStatus.type === "success" 
+                            ? "bg-green-50 border-green-200 text-green-800" 
+                            : "bg-red-50 border-red-200 text-red-800"
+                    }`}
+                >
+                    <span>{syncStatus.message}</span>
+                    <button onClick={() => setSyncStatus(null)} className="font-bold hover:opacity-70 ml-4">✕</button>
+                </motion.div>
+            )}
             
             <Card variant="solid" className="p-6 bg-white border-none shadow-sm">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">

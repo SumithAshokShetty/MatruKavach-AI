@@ -233,6 +233,22 @@ def create_consultation(mother_id: str, consultation: Consultation, session: Ses
             pass
 
     session.add(consultation)
+    
+    # Auto-approve the latest pending risk assessment using the clinician's consultation details
+    try:
+        latest_risk = session.exec(
+            select(RiskAssessment)
+            .where(RiskAssessment.mother_id == mother_id)
+            .order_by(RiskAssessment.timestamp.desc())
+        ).first()
+        
+        if latest_risk and latest_risk.clinical_justification.startswith("[PENDING CLINICIAN CONFIRMATION]"):
+            clean_just = latest_risk.clinical_justification.replace("[PENDING CLINICIAN CONFIRMATION] ", "")
+            latest_risk.clinical_justification = f"{clean_just}\n\n🩺 Confirmed by Dr. Observations: {consultation.observations}"
+            session.add(latest_risk)
+    except Exception as e:
+        print(f"Auto-approval flow failed: {e}")
+
     session.commit()
     session.refresh(consultation)
 
