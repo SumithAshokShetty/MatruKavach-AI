@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Navigation Tab Bar */}
-                <div className="flex border-b border-gray-200">
+                <div className="flex border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-none">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}

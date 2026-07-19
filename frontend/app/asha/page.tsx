@@ -52,7 +52,7 @@ export default function AshaDashboard() {
             </div>
 
             {/* ASHA Tab Selector */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-none">
                 <button
                     onClick={() => setActiveTab("mothers")}
                     className={`pb-4 px-6 text-sm font-bold border-b-2 transition-colors ${

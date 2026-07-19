@@ -23,7 +23,8 @@ export default function DoctorDashboard() {
                 return res.json();
             })
             .then(data => {
-                setMothers(data);
+                const sorted = [...data].sort((a, b) => a.id.localeCompare(b.id));
+                setMothers(sorted);
                 setError(null);
                 setLoading(false);
             })
