@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const data = await res.json();
                 localStorage.setItem("auth_token", data.access_token);
                 // Also set document cookie for middleware validation
-                document.cookie = `token=${data.access_token}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax;`;
+                document.cookie = `token=${data.access_token}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax; Secure;`;
                 setToken(data.access_token);
                 setUser(data.user);
                 return { success: true, user: data.user };
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         localStorage.removeItem("auth_token");
-        document.cookie = "token=; path=/; max-age=0;";
+        document.cookie = "token=; path=/; max-age=0; SameSite=Lax; Secure;";
         setToken(null);
         setUser(null);
         router.push("/login");
