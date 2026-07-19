@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return { success: false, error: `Server error: HTTP ${res.status}` };
         } catch (e) {
             console.error("Login failed", e);
-            return { success: false, error: "Could not connect to the backend server. Please verify the backend is running at http://localhost:8000." };
+            return { success: false, error: `Could not connect to the backend server. Please verify the backend is running at ${API_BASE_URL}.` };
         }
     };
 
