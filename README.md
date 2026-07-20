@@ -1,6 +1,22 @@
 # 🛡️ MatruKavach AI
 ### AI-Powered Maternal Health Risk Detection & Real-Time Alert System
 
+---
+
+## 📌 The Problem
+
+Maternal mortality remains one of the most preventable yet persistent public health crises in rural India. Despite national programs like Janani Suraksha Yojana, thousands of preventable maternal deaths occur annually — primarily due to **three systemic failures**:
+
+1. **Delayed Detection**: Warning signs of life-threatening conditions such as Preeclampsia, severe anaemia, and gestational diabetes go unnoticed until they become emergencies — because routine check-ups are infrequent and self-reporting is limited.
+2. **Communication Barriers**: Pregnant mothers in rural and semi-urban areas speak regional languages (Hindi, Marathi, Kannada, Telugu, Tamil, Bengali) and have no reliable, language-accessible channel to report symptoms to healthcare workers between visits.
+3. **Overburdened Frontline Workers**: ASHA (Accredited Social Health Activist) workers manage large patient loads with no intelligent prioritisation. They cannot determine which mother needs an urgent home visit today versus which can wait — leading to critical cases being missed.
+
+> **The gap is not medical knowledge — it is timely, intelligent information flow.**
+
+---
+
+## 💡 Solution Overview: Introducing MatruKavach AI
+
 MatruKavach AI is an intelligent, context-aware maternal healthcare assistant designed to minimise preventable maternal mortality by detecting risks early. It bridges rural healthcare gaps by connecting pregnant mothers directly with ASHA (Accredited Social Health Activist) workers and doctors through a real-time, multi-agent AI system.
 
 The system fuses **environmental data (air quality, temperature, heat index)**, **clinical vitals (blood pressure, glucose, haemoglobin)**, and **local language voice messages (Hindi, Marathi, Kannada, Telugu, Tamil, Bengali)** to deliver proactive, real-time early warnings — all accessible via Telegram with no app download required.
@@ -201,6 +217,18 @@ docker-compose down
 | **ASHA Route Efficiency** | OR-Tools VRP reduces travel time by an estimated **20–35%** |
 | **Language Coverage** | **7 Indian languages** — accessible to 900M+ speakers |
 | **Infrastructure Barrier** | Zero — runs on Telegram, no app download required |
+
+---
+
+## 📈 Scalability & Future Vision
+
+MatruKavach AI is architected from the ground up to scale from localized pilot deployments to state and national healthcare networks:
+
+- **Horizontal Compute Scaling**: The stateless FastAPI backend is easily containerized and deployed behind a load balancer (e.g., Nginx or AWS ALB) using Docker Compose or Kubernetes. Since Socket.IO real-time alerts utilize Redis for event broadcasting, backend instances can scale out horizontally without losing connection states or WebSocket delivery sync.
+- **Modular Multi-Agent Pipeline**: The state-driven LangGraph orchestrator allows rapid onboarding of new specialized clinical nodes (e.g., Postpartum Hemorrhage monitoring, Neonatal Vitals tracking, or Pediatric Development screening) simply by adding isolated node functions without modifying the core system skeleton.
+- **Production Database Scalability**: Utilizing Neon Serverless PostgreSQL enables auto-scaling database compute resources dynamically based on API load. For national-scale deployment, patient profiles and risk assessments can be partitioned or sharded geographically (e.g., by State or Health Block) to handle millions of active records with minimal latency.
+- **HL7 FHIR Interoperability**: Built with a standardized FHIR synchronization architecture (`MockFHIRProvider` mapping to Epic/Epic-like EHR interfaces), the platform is ready to integrate out-of-the-box with government portals like India's Ayushman Bharat Digital Mission (ABDM) and traditional hospital Information Management Systems (LIMS/EHR).
+- **Federated Offline Resilience**: By deploying local SQLite databases running SQLCipher alongside the in-memory `EmbeddedQueueRegistry` at remote Primary Health Centres (PHCs), localized clinical teams can operate continuously during complete network dropouts. Once connection is restored, cached data is queued and synchronized back to the master Neon Postgres instance out-of-band.
 
 ---
 
